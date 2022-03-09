@@ -22,7 +22,7 @@ public class MainMenuItems
         locator=Locator.class,
         localvars={"index"}
     )
-    public static SpireReturn Insert(Object __obj_instance, @ByRef int[] index)
+    public static SpireReturn<Void> Insert(Object __obj_instance, @ByRef int[] index)
     {
         MainMenuScreen __instance = (MainMenuScreen)__obj_instance;
         __instance.buttons.add(new MenuButton(NewMenuButtons.COOP, index[0]++));
