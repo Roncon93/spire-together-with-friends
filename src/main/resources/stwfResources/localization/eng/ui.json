@@ -3,7 +3,10 @@
     "TEXT": [
       "Single Player",
       "Cooperative",
-      "Versus"
+      "Versus",
+      "Join Game",
+      "Host Game",
+      "Back"
     ]
   },
   "PlayerWidgets": {
