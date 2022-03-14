@@ -2,16 +2,20 @@ package stwf.screens.mainMenu;
 
 import java.util.ArrayList;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuButton;
+import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen.CurScreen;
 import com.megacrit.cardcrawl.screens.options.ConfirmPopup;
 import com.megacrit.cardcrawl.screens.stats.StatsScreen;
 
 import javassist.CtBehavior;
+import stwf.screens.BaseScreenInterface;
+import stwf.screens.coop.*;
 
 /**
  * Patches the MainMenuScreen class to override the default
@@ -20,6 +24,45 @@ import javassist.CtBehavior;
 public class MainMenuScreenPatch
 {
     private static MainMenuScreen mainMenuScreen;
+    private static HostGameScreen hostGameScreen;
+    private static JoinGameScreen joinGameScreen;
+    private static BaseScreenInterface currentScreen;
+
+    /**
+     * Sets the current screen to update and render.
+     * Note: Meant to be used with patched screens.
+     * @param screen The screen to be updated and rendered. 
+     */
+    public static void setCurrentScreen(MainMenuScreen.CurScreen screen)
+    {
+        if (screen == CurScreenPatch.HOST_GAME)
+        {
+            if (hostGameScreen == null)
+            {
+                hostGameScreen = new HostGameScreen();
+            }
+
+            currentScreen = hostGameScreen;
+        }        
+        else if (screen == CurScreenPatch.JOIN_GAME)
+        {
+            if (joinGameScreen == null)
+            {
+                joinGameScreen = new JoinGameScreen();
+            }
+
+            currentScreen = joinGameScreen;
+        }
+    }
+
+    /**
+     * Gets the current screen.
+     * @return The current screen.
+     */
+    public static BaseScreenInterface getCurrentScreen()
+    {
+        return currentScreen;
+    }
 
     /**
      * Updates the menu buttons based on the menu value.
@@ -62,7 +105,7 @@ public class MainMenuScreenPatch
      * Patches the update() methods.
      */
     @SpirePatch2(clz = MainMenuScreen.class, method = "update")
-    public static class MainMenuScreenUpdatePatch
+    public static class UpdateButtonsPatch
     {
         /**
          * Inserts logic to update the menu buttons.
@@ -168,5 +211,59 @@ public class MainMenuScreenPatch
                 return LineFinder.findInOrder(ctMethodToPatch, new ArrayList<Matcher>(), finalMatcher);
             }
         }
+    }
+
+    /**
+     * Patches the update() method.
+     */
+    @SpirePatch2(clz = MainMenuScreen.class, method = "update")
+    public static class UpdatePatch
+    {
+        /**
+         * Updates the current screen.
+         * @param __instance The MainMenuScreen instance containing the currently set screen.
+         */
+        public static void Postfix(MainMenuScreen __instance)
+        {
+            if (isPatchedScreen(__instance.screen))
+            {
+                if (currentScreen != null)
+                {
+                    currentScreen.update();
+                }
+            }
+        }
+    }
+
+    /**
+     * Patches the render() method.
+     */
+    @SpirePatch2(clz = MainMenuScreen.class, method = "render")
+    public static class RenderPatch
+    {
+        /**
+         * Renders the current screen.
+         * @param __instance The MainMenuScreen instance containing the currently set screen.
+         */
+        public static void Postfix(MainMenuScreen __instance, SpriteBatch sb)
+        {
+            if (isPatchedScreen(__instance.screen))
+            {
+                if (currentScreen != null)
+                {
+                    currentScreen.render(sb);
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks if the given screen is a patched screen.
+     * @param screen The screen to check.
+     * @return True if the screen has been patched in, false otherwise.
+     */
+    private static boolean isPatchedScreen(CurScreen screen)
+    {
+        return screen == CurScreenPatch.HOST_GAME || screen == CurScreenPatch.JOIN_GAME;
     }
 }

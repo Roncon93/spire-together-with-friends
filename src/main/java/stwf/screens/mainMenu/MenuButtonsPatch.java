@@ -3,8 +3,11 @@ package stwf.screens.mainMenu;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireEnum;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuButton;
+
+import stwf.screens.coop.CurScreenPatch;
+
 import com.megacrit.cardcrawl.core.*;
-import stwf.util.RichPresencePatch;
+
 import java.lang.reflect.Field;
 
 /**
@@ -13,19 +16,19 @@ import java.lang.reflect.Field;
 public class MenuButtonsPatch
 {
     @SpireEnum
-    static MenuButton.ClickResult SINGLE_PLAYER;
+    public static MenuButton.ClickResult SINGLE_PLAYER;
 
     @SpireEnum
-    static MenuButton.ClickResult COOP;
+    public static MenuButton.ClickResult COOP;
 
     @SpireEnum
-    static MenuButton.ClickResult JOIN_GAME;
+    public static MenuButton.ClickResult JOIN_GAME;
 
     @SpireEnum
-    static MenuButton.ClickResult HOST_GAME;
+    public static MenuButton.ClickResult HOST_GAME;
 
     @SpireEnum
-    static MenuButton.ClickResult BACK;
+    public static MenuButton.ClickResult BACK;
 
     /**
      * Patches the setLabel method to use the localization UI strings for the buttons.
@@ -108,18 +111,25 @@ public class MenuButtonsPatch
         public static void Postfix(MenuButton __instance)
         {
             if (__instance.result == SINGLE_PLAYER)
-            {  
-                RichPresencePatch.setRP(CardCrawlGame.languagePack.getUIString("RichPresence").TEXT[2]);
+            {
                 MainMenuScreenPatch.showMenu(Menus.SINGLE_PLAYER);
             }
             else if (__instance.result == COOP)
-            {  
-                RichPresencePatch.setRP(CardCrawlGame.languagePack.getUIString("RichPresence").TEXT[2]);
+            {
                 MainMenuScreenPatch.showMenu(Menus.COOP);
+            }
+            else if (__instance.result == HOST_GAME)
+            {
+                MainMenuScreenPatch.setCurrentScreen(CurScreenPatch.HOST_GAME);
+                MainMenuScreenPatch.getCurrentScreen().open();
+            }
+            else if (__instance.result == JOIN_GAME)
+            {
+                MainMenuScreenPatch.setCurrentScreen(CurScreenPatch.JOIN_GAME);
+                MainMenuScreenPatch.getCurrentScreen().open();
             }
             else if (__instance.result == BACK)
             {
-                RichPresencePatch.setRP(CardCrawlGame.languagePack.getUIString("RichPresence").TEXT[2]);
                 MainMenuScreenPatch.showMenu(Menus.MAIN);
             }
         }
