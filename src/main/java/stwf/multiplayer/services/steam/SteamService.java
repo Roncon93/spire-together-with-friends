@@ -5,13 +5,10 @@ import java.nio.ByteBuffer;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.codedisaster.steamworks.SteamApps;
-import com.codedisaster.steamworks.SteamException;
 import com.codedisaster.steamworks.SteamFriends;
-import com.codedisaster.steamworks.SteamFriends.PersonaChange;
-import com.codedisaster.steamworks.SteamFriendsCallback;
+import com.codedisaster.steamworks.SteamMatchmaking.LobbyType;
 import com.codedisaster.steamworks.SteamID;
 import com.codedisaster.steamworks.SteamMatchmaking;
-import com.codedisaster.steamworks.SteamNetworking;
 import com.codedisaster.steamworks.SteamResult;
 import com.codedisaster.steamworks.SteamUser;
 import com.codedisaster.steamworks.SteamUtils;
@@ -19,29 +16,47 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 
 import basemod.ReflectionHacks;
 import stwf.multiplayer.PlayerProfile;
+import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
+import stwf.multiplayer.services.MultiplayerServiceResult;
 
 public class SteamService implements MultiplayerServiceInterface
 {
     // public static SteamCallbacks callbacks;  
-    public static SteamMatchmaking matcher;    
+    private SteamMatchmaking matchmaking;    
     private SteamFriends friends;    
-    public static SteamNetworking net;    
-    public static SteamUtils utils;
+    // private SteamNetworking net;    
+    private SteamUtils utils;
+
+    private SteamServiceMatchmakingCallback matchmakingCallback;
 
     private PlayerProfile localPlayer;
     private SteamUser localSteamUser;
 
     public SteamService()
     {
+        matchmakingCallback = new SteamServiceMatchmakingCallback();
+
         SteamApps steamApps = (SteamApps)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamApps");
         // callbacks = new SteamCallbacks();
-        // matcher = new SteamMatchmaking(callbacks);
         // net = new SteamNetworking(callbacks);
+        matchmaking = new SteamMatchmaking(matchmakingCallback);
         utils = new SteamUtils(new SteamServiceUtilsCallback());
         friends = new SteamFriends(new SteamServiceFriendsCallback());
 
         localSteamUser = (SteamUser)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamUser");
+        
+    }
+
+    public void createLobby(MultiplayerServiceInterface.LobbyEventListener listener, MultiplayerLobbyType type, int maxPlayers)
+    {
+        matchmakingCallback.lobbyEventListener = listener;
+        matchmaking.createLobby(SteamServiceUtils.convertGenericLobbyTypeToSteamLobbyType(type), maxPlayers);
+    }
+
+    public void leaveLobby(MultiplayerServiceId id)
+    {
+        matchmaking.leaveLobby(SteamServiceUtils.convertGenericIdToSteamId(id));
     }
 
     public String getLocalUserName()
@@ -88,5 +103,54 @@ public class SteamService implements MultiplayerServiceInterface
         }
 
         return new Texture(pixmap);
+    }
+
+    public static class SteamServiceUtils
+    {
+        public static SteamID convertGenericIdToSteamId(MultiplayerServiceId id)
+        {
+            return id.steamId;
+        }
+
+        public static LobbyType convertGenericLobbyTypeToSteamLobbyType(MultiplayerLobbyType type)
+        {
+            return LobbyType.Public;
+        }
+
+        public static MultiplayerServiceResult convertSteamResultToGenericResult(SteamResult result)
+        {
+            if (result == SteamResult.OK)
+            {
+                return MultiplayerServiceResult.OK;
+            }
+
+            return MultiplayerServiceResult.FAIL;
+        }
+
+        public static MultiplayerServiceId convertSteamIdToGenericId(SteamID id)
+        {
+            return new MultiplayerServiceId(id);
+        }
+    }
+    
+    public static class MultiplayerServiceId
+    {
+        private final SteamID steamId;
+
+        public MultiplayerServiceId(SteamID id)
+        {
+            steamId = id;
+        }
+
+        @Override
+        public String toString()
+        {
+            if (steamId != null)
+            {
+                return steamId.toString();
+            }
+
+            return super.toString();
+        }
     }
 }

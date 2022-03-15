@@ -20,7 +20,10 @@ import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
 import stwf.multiplayer.LobbyPlayer;
+import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
+import stwf.multiplayer.services.MultiplayerServiceResult;
+import stwf.multiplayer.services.steam.SteamService.MultiplayerServiceId;
 import stwf.screens.BaseScreenInterface;
 import stwf.screens.components.BaseButtonComponent;
 import stwf.screens.components.ButtonListenerInterface;
@@ -29,7 +32,7 @@ import stwf.screens.components.LabelComponent;
 import stwf.screens.components.PlayerListComponent;
 import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
 
-public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener
+public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceInterface.LobbyEventListener
 {
     public MenuCancelButton returnButton;
     public GridSelectConfirmButton embarkButton;
@@ -42,6 +45,9 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
     private Texture selectedCharacterPortraitImage;
     private LobbyPlayer localPlayer;
+
+    private MultiplayerServiceInterface multiplayerService;
+    private MultiplayerServiceId lobbyId;
 
     public HostGameScreen(MultiplayerServiceInterface multiplayerService)
     {
@@ -59,6 +65,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         localPlayer = new LobbyPlayer();
         localPlayer.profile = multiplayerService.getLocalPlayerProfile();
         playerList.AddPlayer(localPlayer);
+
+        this.multiplayerService = multiplayerService;
     }
 
     @Override
@@ -84,6 +92,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         setPlayerListReadyButtonListener();
 
         localPlayer.isReady = false;
+
+        multiplayerService.createLobby(this, MultiplayerLobbyType.PUBLIC, 2);
     }
 
     @Override
@@ -96,6 +106,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         embarkButton.hide();
 
         dispose();
+
+        multiplayerService.leaveLobby(lobbyId);
     }
 
     private void dispose()
@@ -104,6 +116,15 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         {
             selectedCharacterPortraitImage.dispose();
             selectedCharacterPortraitImage = null;
+        }
+    }
+
+    @Override
+    public void onLobbyCreated(MultiplayerServiceResult result, MultiplayerServiceId id)
+    {
+        if (result == MultiplayerServiceResult.OK)
+        {
+            lobbyId = id;
         }
     }
 
