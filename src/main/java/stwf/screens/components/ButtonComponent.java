@@ -20,9 +20,9 @@ public class ButtonComponent extends BaseButtonComponent
 
     private static final Color HOVER_BLEND_COLOR = new Color(1.0F, 1.0F, 1.0F, 0.3F);
     private static final Color BUTTON_SHADOW_COLOR = new Color(0.0F, 0.0F, 0.0F, 0.2F);
+    private static final Color TEXT_DISABLED_COLOR = new Color(0.6F, 0.6F, 0.6F, 1.0F);
 
     private boolean isHidden;
-    private boolean isDisabled;
 
     private float glowAlpha;  
     private Color glowColor;
@@ -36,7 +36,6 @@ public class ButtonComponent extends BaseButtonComponent
         glowAlpha = 0.0F;
         glowColor = Color.WHITE.cpy();
         isHidden = false;
-        isDisabled = false;
     }
 
     @Override
@@ -116,16 +115,7 @@ public class ButtonComponent extends BaseButtonComponent
     {
         renderShadow(spriteBatch);
         renderButton(spriteBatch);
-
-        if (hitbox.hovered && !isDisabled && !hitbox.clickStarted)
-        {
-            spriteBatch.setBlendFunction(770, 1);
-            spriteBatch.setColor(HOVER_BLEND_COLOR);
-            renderButton(spriteBatch);
-            spriteBatch.setBlendFunction(770, 771);
-        }
-
-        FontHelper.renderFontCentered(spriteBatch, FontHelper.buttonLabelFont, label, x, y, Settings.LIGHT_YELLOW_COLOR);
+        renderButtonLabel(spriteBatch);
     }
 
     private void renderShadow(SpriteBatch spriteBatch)
@@ -137,6 +127,37 @@ public class ButtonComponent extends BaseButtonComponent
 
     private void renderButton(SpriteBatch spriteBatch)
     {
-        spriteBatch.draw(ImageMaster.REWARD_SCREEN_TAKE_BUTTON, x - 256.0F, y - 128.0F, 256.0F, 128.0F, 512.0F, 256.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 512, 256, false, false);
+        if (!isDisabled)
+        {
+            spriteBatch.draw(ImageMaster.REWARD_SCREEN_TAKE_BUTTON, x - 256.0F, y - 128.0F, 256.0F, 128.0F, 512.0F, 256.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 512, 256, false, false);
+        }
+        else
+        {
+            spriteBatch.draw(ImageMaster.REWARD_SCREEN_TAKE_USED_BUTTON, x - 256.0F, y - 128.0F, 256.0F, 128.0F, 512.0F, 256.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 512, 256, false, false);
+        }
+
+        if (hitbox.hovered && !isDisabled && !hitbox.clickStarted)
+        {
+            spriteBatch.setBlendFunction(770, 1);
+            spriteBatch.setColor(HOVER_BLEND_COLOR);
+            spriteBatch.draw(ImageMaster.REWARD_SCREEN_TAKE_USED_BUTTON, x - 256.0F, y - 128.0F, 256.0F, 128.0F, 512.0F, 256.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 512, 256, false, false);
+            spriteBatch.setBlendFunction(770, 771);
+        }
+    }
+
+    private void renderButtonLabel(SpriteBatch spriteBatch)
+    {
+        if (isDisabled)
+        {
+            FontHelper.renderFontCentered(spriteBatch, FontHelper.buttonLabelFont, label, x, y, TEXT_DISABLED_COLOR);
+        }
+        else if (hitbox.clickStarted)
+        {
+            FontHelper.renderFontCentered(spriteBatch, FontHelper.buttonLabelFont, label, x, y, Color.LIGHT_GRAY);
+        }
+        else
+        {
+            FontHelper.renderFontCentered(spriteBatch, FontHelper.buttonLabelFont, label, x, y, Settings.LIGHT_YELLOW_COLOR);
+        } 
     }
 }

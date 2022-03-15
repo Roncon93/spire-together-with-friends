@@ -6,35 +6,52 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
+import stwf.multiplayer.Player;
+import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.screens.BaseScreenInterface;
 import stwf.screens.components.CharacterSelectComponent;
+import stwf.screens.components.LabelComponent;
 import stwf.screens.components.PlayerListComponent;
 import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
 
 public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener
 {
     public MenuCancelButton returnButton;
-    public PlayerListComponent playerListComponent;
-    public CharacterSelectComponent characterSelectComponent;
+    public PlayerListComponent playerList;
+    public CharacterSelectComponent characterSelect;
+    public LabelComponent titleLabel;
 
     private Color bgCharColor = new Color(1.0F, 1.0F, 1.0F, 1.0F);
     private float bg_y_offset = 0.0F;
 
     private Texture selectedCharacterPortraitImage;
+    private Player localPlayer;
+    private boolean areAllPlayersReady;
 
-    public HostGameScreen()
+    public HostGameScreen(MultiplayerServiceInterface multiplayerService)
     {
         returnButton = new MenuCancelButton();
-        playerListComponent = new PlayerListComponent();
-        characterSelectComponent = new CharacterSelectComponent();
+        playerList = new PlayerListComponent();
+        characterSelect = new CharacterSelectComponent();
+        titleLabel = new LabelComponent(CardCrawlGame.languagePack.getUIString("Lobby").TEXT[13]);
 
-        characterSelectComponent.listener = this;
+        characterSelect.listener = this;
+
+        titleLabel.font = FontHelper.SCP_cardTitleFont_small;
+        titleLabel.color = Settings.GOLD_COLOR;
+        
+        localPlayer = new Player();
+        localPlayer.profile = multiplayerService.getLocalPlayerProfile();
+        playerList.AddPlayer(localPlayer);
+
+        areAllPlayersReady = false;
     }
 
     @Override
@@ -45,8 +62,11 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
         returnButton.show(PatchNotesScreen.TEXT[0]);
 
-        playerListComponent.move(Settings.WIDTH * 0.22f, Settings.HEIGHT * 0.82F);
-        characterSelectComponent.move(Settings.WIDTH * 0.5f, Settings.HEIGHT * 0.31F);
+        playerList.move(Settings.WIDTH * 0.22f, Settings.HEIGHT * 0.82F);
+        characterSelect.move(Settings.WIDTH * 0.5f, Settings.HEIGHT * 0.31F);
+        titleLabel.move(Settings.WIDTH / 2.0F, Settings.HEIGHT - 70.0F * Settings.scale);
+
+        playerList.setReadyButtonDisabled(true);
     }
 
     @Override
@@ -56,7 +76,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         CardCrawlGame.mainMenuScreen.lighten();
         
         returnButton.hide();
-        characterSelectComponent.deselect();
+        characterSelect.deselect();
 
         dispose();
     }
@@ -77,6 +97,10 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
         selectedCharacterPortraitImage = ImageMaster.loadImage("images/ui/charSelect/" + character.getPortraitImageName());
         character.doCharSelectScreenSelectEffect();
+
+        localPlayer.character = character;
+
+        playerList.setReadyButtonDisabled(false);
     }
 
     @Override
@@ -91,8 +115,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
             close();
         }
 
-        playerListComponent.update();
-        characterSelectComponent.update();
+        playerList.update();
+        characterSelect.update();
     }
 
     @Override
@@ -121,7 +145,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         }
 
         returnButton.render(spriteBatch);
-        playerListComponent.render(spriteBatch);
-        characterSelectComponent.render(spriteBatch);
+        playerList.render(spriteBatch);
+        characterSelect.render(spriteBatch);
+        titleLabel.render(spriteBatch);
     }
 }

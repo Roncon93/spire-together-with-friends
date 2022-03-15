@@ -1,5 +1,7 @@
 package stwf.screens.components;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.FontHelper;
@@ -7,6 +9,8 @@ import com.megacrit.cardcrawl.helpers.FontHelper;
 public class LabelComponent extends BaseComponent
 {
     public String text;
+    public Color color;
+    public BitmapFont font;
     public float scale;
 
     public LabelComponent()
@@ -19,6 +23,8 @@ public class LabelComponent extends BaseComponent
         super(0.0f, 0.0f);
 
         this.text = text;
+        font = FontHelper.losePowerFont;
+        color = Settings.CREAM_COLOR;
         scale = 1.0f;
     }
 
@@ -42,7 +48,7 @@ public class LabelComponent extends BaseComponent
     {
         if (alignment == LabelAlignment.CENTERED)
         {
-            FontHelper.renderFontCentered(spriteBatch, FontHelper.losePowerFont, text, x, y, Settings.CREAM_COLOR, scale);
+            FontHelper.renderFontCentered(spriteBatch, font, text, x, y, color, scale);
         }
     }
 }

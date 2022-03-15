@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 
+import stwf.multiplayer.Player;
+
 public class PlayerListComponent extends BaseComponent
 {
     private ListPanelComponent panel;
@@ -44,6 +46,14 @@ public class PlayerListComponent extends BaseComponent
         return CardCrawlGame.languagePack.getUIString("Lobby").TEXT[index];
     }
 
+    public void AddPlayer(Player player)
+    {
+        PlayerListItemComponent item = new PlayerListItemComponent();
+        item.player = player;
+
+        playerListItems.add(item);
+    }
+
     /**
      * Sets the ButtonComponentListener for the ready button.
      * @param listener
@@ -51,6 +61,11 @@ public class PlayerListComponent extends BaseComponent
     public void setReadyButtonListener(ButtonListenerInterface listener)
     {
         button.listener = listener;
+    }
+
+    public void setReadyButtonDisabled(boolean isDisabled)
+    {
+        button.isDisabled = isDisabled;
     }
 
     @Override

@@ -16,6 +16,7 @@ public abstract class BaseButtonComponent extends BaseComponent
     public float scale;
     public String hoverSound;
     public String clickSound;
+    public boolean isDisabled;
 
     public BaseButtonComponent()
     {
@@ -29,6 +30,8 @@ public abstract class BaseButtonComponent extends BaseComponent
 
         hoverSound = DEFAULT_SOUND_HOVER;
         clickSound = DEFAULT_SOUND_CLICK;
+
+        isDisabled = false;
     }
 
     /**
@@ -73,7 +76,7 @@ public abstract class BaseButtonComponent extends BaseComponent
             onHover();
         }
 
-        if (InputHelper.justClickedLeft && hitbox.hovered)
+        if (InputHelper.justClickedLeft && hitbox.hovered && !isDisabled)
         {
             hitbox.clickStarted = true;
 

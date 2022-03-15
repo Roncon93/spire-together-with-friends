@@ -14,6 +14,7 @@ import com.megacrit.cardcrawl.screens.options.ConfirmPopup;
 import com.megacrit.cardcrawl.screens.stats.StatsScreen;
 
 import javassist.CtBehavior;
+import stwf.multiplayer.services.steam.SteamService;
 import stwf.screens.BaseScreenInterface;
 import stwf.screens.coop.*;
 
@@ -39,7 +40,7 @@ public class MainMenuScreenPatch
         {
             if (hostGameScreen == null)
             {
-                hostGameScreen = new HostGameScreen();
+                hostGameScreen = new HostGameScreen(new SteamService());
             }
 
             currentScreen = hostGameScreen;
