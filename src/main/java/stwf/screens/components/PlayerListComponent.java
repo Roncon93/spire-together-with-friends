@@ -11,6 +11,9 @@ import stwf.multiplayer.LobbyPlayer;
 
 public class PlayerListComponent extends BaseComponent
 {
+    private static final int READY_TEXT_INDEX = 17;
+    private static final int UNREADY_TEXT_INDEX = 18;
+
     private ListPanelComponent panel;
     private BannerComponent banner;
     private ButtonComponent button;
@@ -31,7 +34,8 @@ public class PlayerListComponent extends BaseComponent
         playerListItems = new CopyOnWriteArrayList<>();
 
         banner.label = GetLobbyUIString(12);
-        button.label = GetLobbyUIString(17);
+
+        setReady(true);
 
         button.show();
     }
@@ -66,6 +70,11 @@ public class PlayerListComponent extends BaseComponent
     public void setReadyButtonDisabled(boolean isDisabled)
     {
         button.isDisabled = isDisabled;
+    }
+
+    public void setReady(boolean isReady)
+    {
+        button.label = isReady ? GetLobbyUIString(UNREADY_TEXT_INDEX) : GetLobbyUIString(READY_TEXT_INDEX);
     }
 
     @Override

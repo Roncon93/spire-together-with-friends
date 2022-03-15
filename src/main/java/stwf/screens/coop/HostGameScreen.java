@@ -6,12 +6,18 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import com.megacrit.cardcrawl.helpers.SeedHelper;
+import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.megacrit.cardcrawl.random.Random;
+import com.megacrit.cardcrawl.screens.charSelect.CharacterSelectScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
+import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
 import stwf.multiplayer.LobbyPlayer;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
@@ -26,6 +32,7 @@ import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponent
 public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener
 {
     public MenuCancelButton returnButton;
+    public GridSelectConfirmButton embarkButton;
     public PlayerListComponent playerList;
     public CharacterSelectComponent characterSelect;
     public LabelComponent titleLabel;
@@ -39,6 +46,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     public HostGameScreen(MultiplayerServiceInterface multiplayerService)
     {
         returnButton = new MenuCancelButton();
+        embarkButton = new GridSelectConfirmButton(CharacterSelectScreen.TEXT[1]);
         playerList = new PlayerListComponent();
         characterSelect = new CharacterSelectComponent();
         titleLabel = new LabelComponent(CardCrawlGame.languagePack.getUIString("Lobby").TEXT[13]);
@@ -60,14 +68,22 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         CardCrawlGame.mainMenuScreen.screen = CurScreenPatch.HOST_GAME;
 
         returnButton.show(PatchNotesScreen.TEXT[0]);
+        embarkButton.show();
+        embarkButton.isDisabled = true;
 
         playerList.move(Settings.WIDTH * 0.22f, Settings.HEIGHT * 0.82F);
         characterSelect.move(Settings.WIDTH * 0.5f, Settings.HEIGHT * 0.31F);
         titleLabel.move(Settings.WIDTH / 2.0F, Settings.HEIGHT - 70.0F * Settings.scale);
 
+        characterSelect.enable();
+        characterSelect.deselect();
+
         playerList.setReadyButtonDisabled(true);
+        playerList.setReady(false);
 
         setPlayerListReadyButtonListener();
+
+        localPlayer.isReady = false;
     }
 
     @Override
@@ -77,7 +93,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         CardCrawlGame.mainMenuScreen.lighten();
         
         returnButton.hide();
-        characterSelect.deselect();
+        embarkButton.hide();
 
         dispose();
     }
@@ -100,7 +116,11 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
             {
                 localPlayer.isReady = !localPlayer.isReady;
 
+                playerList.setReady(localPlayer.isReady);
+
                 characterSelect.setDisabled(localPlayer.isReady);
+
+                embarkButton.isDisabled = !localPlayer.isReady;
             }
         });
     }
@@ -121,7 +141,14 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     @Override
     public void update()
     {
+        if (CardCrawlGame.mainMenuScreen.fadedOut)
+        {
+            close();
+            return;
+        }
+
         returnButton.update();
+        embarkButton.update();
 
         if (returnButton.hb.clicked || InputHelper.pressedEscape)
         {
@@ -129,9 +156,37 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
             InputHelper.pressedEscape = false;
             close();
         }
+        else if (embarkButton.hb.clicked || CInputActionSet.proceed.isJustPressed())
+        {
+            embarkButton.hb.clicked = false;
+
+            setRandomSeed();
+
+            CardCrawlGame.chosenCharacter = localPlayer.character.chosenClass;
+
+            CardCrawlGame.mainMenuScreen.isFadingOut = true;
+            CardCrawlGame.mainMenuScreen.fadeOutMusic();
+            Settings.isDailyRun = false;
+
+            AbstractDungeon.isAscensionMode = false;
+            AbstractDungeon.ascensionLevel = 0;
+
+            AbstractDungeon.generateSeeds();
+
+            CardCrawlGame.mainMenuScreen.screen = MainMenuScreen.CurScreen.MAIN_MENU;
+        }
 
         playerList.update();
         characterSelect.update();
+    }
+
+    private void setRandomSeed()
+    {
+        long sourceTime = System.nanoTime();
+        Random rng = new Random(Long.valueOf(sourceTime));
+        Settings.seedSourceTimestamp = sourceTime;
+        Settings.seed = Long.valueOf(SeedHelper.generateUnoffensiveSeed(rng));
+        Settings.seedSet = false;
     }
 
     @Override
@@ -160,6 +215,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         }
 
         returnButton.render(spriteBatch);
+        embarkButton.render(spriteBatch);
         playerList.render(spriteBatch);
         characterSelect.render(spriteBatch);
         titleLabel.render(spriteBatch);

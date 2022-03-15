@@ -99,12 +99,12 @@ public class CharacterSelectComponent extends BaseComponent
 
     public void enable()
     {
-        setDisabled(true);
+        setDisabled(false);
     }
 
     public void disable()
     {
-        setDisabled(false);
+        setDisabled(true);
     }
 
     public void setDisabled(boolean disable)
