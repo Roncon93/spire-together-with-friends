@@ -7,8 +7,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 
-import stwf.screens.components.ButtonComponent.ButtonListenerInterface;
-
 public class PlayerListComponent extends BaseComponent
 {
     private ListPanelComponent panel;
@@ -29,12 +27,6 @@ public class PlayerListComponent extends BaseComponent
         banner = new BannerComponent();
         button = new ButtonComponent();
         playerListItems = new CopyOnWriteArrayList<>();
-        playerListItems.add(new PlayerListItemComponent());
-        playerListItems.add(new PlayerListItemComponent());
-        playerListItems.add(new PlayerListItemComponent());
-        playerListItems.add(new PlayerListItemComponent());
-        playerListItems.add(new PlayerListItemComponent());
-        playerListItems.add(new PlayerListItemComponent());
 
         banner.label = GetLobbyUIString(12);
         button.label = GetLobbyUIString(17);

@@ -12,20 +12,8 @@ import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 
-public class ButtonComponent extends BaseComponent
+public class ButtonComponent extends BaseButtonComponent
 {
-    /**
-     * Button component event listener interface.
-     */
-    public interface ButtonListenerInterface
-    {
-        /**
-         * Called when button has been clicked.
-         * @param button The button that was clicked.
-         */
-        void onClick(ButtonComponent button);
-    }
-
     public final Hitbox hitbox;
     public String label;
     public ButtonListenerInterface listener;

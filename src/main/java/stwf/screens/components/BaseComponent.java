@@ -2,8 +2,8 @@ package stwf.screens.components;
 
 public abstract class BaseComponent implements ComponentInterface
 {
-    protected float x;
-    protected float y;
+    public float x;
+    public float y;
 
     public BaseComponent()
     {
@@ -12,7 +12,8 @@ public abstract class BaseComponent implements ComponentInterface
 
     public BaseComponent(float x, float y)
     {
-        move(x, y);
+        this.x = x;
+        this.y = y;
     }
 
     @Override
