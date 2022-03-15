@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 
-import stwf.multiplayer.Player;
+import stwf.multiplayer.LobbyPlayer;
 
 public class PlayerListComponent extends BaseComponent
 {
@@ -46,7 +46,7 @@ public class PlayerListComponent extends BaseComponent
         return CardCrawlGame.languagePack.getUIString("Lobby").TEXT[index];
     }
 
-    public void AddPlayer(Player player)
+    public void AddPlayer(LobbyPlayer player)
     {
         PlayerListItemComponent item = new PlayerListItemComponent();
         item.player = player;

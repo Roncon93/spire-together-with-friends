@@ -6,14 +6,14 @@ import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 
-import stwf.multiplayer.Player;
+import stwf.multiplayer.LobbyPlayer;
 
 public class PlayerListItemComponent extends BaseComponent
 {
     public static final String NONE_CHARACTER_SELECTED_NAME = "None";
 
     public float scroll;
-    public Player player;
+    public LobbyPlayer player;
 
     @Override
     public void render(SpriteBatch spriteBatch)
@@ -27,14 +27,10 @@ public class PlayerListItemComponent extends BaseComponent
      * @param index The index of this item on the list for setting its placement.
      */
     public void render(SpriteBatch spriteBatch, int index)
-    {
-        spriteBatch.setColor(Color.WHITE);
-        spriteBatch.draw(ImageMaster.REWARD_SCREEN_ITEM, x - 232.0F, y + scroll - index * 75.0F * Settings.scale - 49.0F, 232.0F, 49.0F, 464.0F, 98.0F, Settings.scale, Settings.scale * 0.75F, 0.0F, 0, 0, 464, 98, false, false);
-
-        FontHelper.renderSmartText(spriteBatch, FontHelper.topPanelInfoFont, player.profile.username, x - 112.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale + 16.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Settings.CREAM_COLOR, 1);
-        FontHelper.renderSmartText(spriteBatch, FontHelper.cardTypeFont, getCharacterName(), x - 100.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 10.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Color.DARK_GRAY, 1.0F);
-
-        spriteBatch.draw(player.profile.avatar, x - 28.0F - 164.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 28.0F - 2.0F * Settings.scale, 28.0F, 28.0F, 56.0F, 56.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, player.profile.avatar.getWidth(), player.profile.avatar.getHeight(), false, false);
+    {        
+        renderListItemBackground(spriteBatch, index);
+        renderPlayerInfo(spriteBatch, index);
+        renderReadyTick(spriteBatch, index);
     }
 
     private String getCharacterName()
@@ -45,5 +41,27 @@ public class PlayerListItemComponent extends BaseComponent
         }
 
         return NONE_CHARACTER_SELECTED_NAME;
+    }
+
+    private void renderListItemBackground(SpriteBatch spriteBatch, int index)
+    {
+        spriteBatch.setColor(Color.WHITE);
+        spriteBatch.draw(ImageMaster.REWARD_SCREEN_ITEM, x - 232.0F, y + scroll - index * 75.0F * Settings.scale - 49.0F, 232.0F, 49.0F, 464.0F, 98.0F, Settings.scale, Settings.scale * 0.75F, 0.0F, 0, 0, 464, 98, false, false);
+    }
+
+    private void renderPlayerInfo(SpriteBatch spriteBatch, int index)
+    {
+        FontHelper.renderSmartText(spriteBatch, FontHelper.topPanelInfoFont, player.profile.username, x - 112.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale + 16.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Settings.CREAM_COLOR, 1);
+        FontHelper.renderSmartText(spriteBatch, FontHelper.cardTypeFont, getCharacterName(), x - 100.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 10.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Color.DARK_GRAY, 1.0F);
+
+        spriteBatch.draw(player.profile.avatar, x - 28.0F - 164.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 28.0F - 2.0F * Settings.scale, 28.0F, 28.0F, 56.0F, 56.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, player.profile.avatar.getWidth(), player.profile.avatar.getHeight(), false, false);
+    }
+
+    private void renderReadyTick(SpriteBatch spriteBatch, int index)
+    {
+        if (player.isReady)
+        {
+            spriteBatch.draw(ImageMaster.TICK, x - 32.0F + 164.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 32.0F - 2.0F * Settings.scale, 32.0F, 32.0F, 64.0F, 64.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 64, 64, false, false);
+        }
     }
 }

@@ -13,9 +13,11 @@ import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
-import stwf.multiplayer.Player;
+import stwf.multiplayer.LobbyPlayer;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.screens.BaseScreenInterface;
+import stwf.screens.components.BaseButtonComponent;
+import stwf.screens.components.ButtonListenerInterface;
 import stwf.screens.components.CharacterSelectComponent;
 import stwf.screens.components.LabelComponent;
 import stwf.screens.components.PlayerListComponent;
@@ -32,8 +34,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     private float bg_y_offset = 0.0F;
 
     private Texture selectedCharacterPortraitImage;
-    private Player localPlayer;
-    private boolean areAllPlayersReady;
+    private LobbyPlayer localPlayer;
 
     public HostGameScreen(MultiplayerServiceInterface multiplayerService)
     {
@@ -47,11 +48,9 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         titleLabel.font = FontHelper.SCP_cardTitleFont_small;
         titleLabel.color = Settings.GOLD_COLOR;
         
-        localPlayer = new Player();
+        localPlayer = new LobbyPlayer();
         localPlayer.profile = multiplayerService.getLocalPlayerProfile();
         playerList.AddPlayer(localPlayer);
-
-        areAllPlayersReady = false;
     }
 
     @Override
@@ -67,6 +66,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         titleLabel.move(Settings.WIDTH / 2.0F, Settings.HEIGHT - 70.0F * Settings.scale);
 
         playerList.setReadyButtonDisabled(true);
+
+        setPlayerListReadyButtonListener();
     }
 
     @Override
@@ -88,6 +89,20 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
             selectedCharacterPortraitImage.dispose();
             selectedCharacterPortraitImage = null;
         }
+    }
+
+    private void setPlayerListReadyButtonListener()
+    {
+        playerList.setReadyButtonListener(new ButtonListenerInterface()
+        {
+            @Override
+            public void onClick(BaseButtonComponent button)
+            {
+                localPlayer.isReady = !localPlayer.isReady;
+
+                characterSelect.setDisabled(localPlayer.isReady);
+            }
+        });
     }
 
     @Override

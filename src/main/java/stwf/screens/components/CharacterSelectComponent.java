@@ -97,6 +97,24 @@ public class CharacterSelectComponent extends BaseComponent
         }
     }
 
+    public void enable()
+    {
+        setDisabled(true);
+    }
+
+    public void disable()
+    {
+        setDisabled(false);
+    }
+
+    public void setDisabled(boolean disable)
+    {
+        for (CharacterSelectButton button : characterOptionButtons)
+        {
+            button.isDisabled = disable; 
+        }
+    }
+
     /**
      * Deselects the currently selected character if any.
      */

@@ -71,7 +71,7 @@ public abstract class BaseButtonComponent extends BaseComponent
     {
         hitbox.update();
 
-        if (hitbox.justHovered)
+        if (hitbox.justHovered && !isDisabled)
         {
             onHover();
         }

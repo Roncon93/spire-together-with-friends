@@ -72,7 +72,7 @@ public class CharacterSelectButton extends ToggleButtonComponent
         // spriteBatch.draw(ImageMaster.CHAR_OPT_HIGHLIGHT, hitbox.cX - 110.0F, hitbox.cY - 110.0F, 110.0F, 110.0F, 220.0F, 220.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 220, 220, false, false);
         spriteBatch.draw(ImageMaster.CHAR_OPT_HIGHLIGHT, x, y, width / 2, height / 2, width, height, scale, scale, 0.0F, 0, 0, (int)width, (int)height, false, false);
 
-        if (isToggled || hitbox.hovered)
+        if (isToggled || (hitbox.hovered && !isDisabled))
         {
             spriteBatch.setColor(Color.WHITE);
         }
