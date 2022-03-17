@@ -1,10 +1,14 @@
 package stwf.multiplayer.services.steam;
 
+import java.util.ArrayList;
+
 import com.codedisaster.steamworks.SteamID;
+import com.codedisaster.steamworks.SteamMatchmaking;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatEntryType;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatMemberStateChange;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
 
+import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.steam.SteamService.SteamServiceUtils;
 
@@ -14,6 +18,7 @@ import com.codedisaster.steamworks.SteamResult;
 public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
 {
     public MultiplayerServiceInterface.LobbyEventListener lobbyEventListener;
+    public SteamMatchmaking matchmakingService;
 
     @Override
     public void onFavoritesListAccountsUpdated(SteamResult arg0) {
@@ -79,9 +84,29 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     }
 
     @Override
-    public void onLobbyMatchList(int arg0) {
-        // TODO Auto-generated method stub
-        
+    public void onLobbyMatchList(int lobbiesMatched)
+    {
+        ArrayList<MultiplayerLobby> lobbies = new ArrayList<>();
+
+        if (matchmakingService != null)
+        {
+            for (int index = 0; index < lobbiesMatched; index++)
+            {
+                SteamID lobbyId = matchmakingService.getLobbyByIndex(index);
+                SteamID ownerId = matchmakingService.getLobbyOwner(lobbyId);
+
+                MultiplayerLobby lobby = new MultiplayerLobby();
+                lobby.id = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
+                lobby.hostId = SteamServiceUtils.convertSteamIdToGenericId(ownerId);
+                lobby.hostName = matchmakingService.getLobbyData(lobbyId, "hostName");
+
+                lobbies.add(lobby);
+            }
+        }
+
+        if (lobbyEventListener != null)
+        {
+            lobbyEventListener.onLobbiesRequested(lobbies);
+        }
     }
-    
 }

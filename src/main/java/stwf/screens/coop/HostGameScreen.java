@@ -1,5 +1,7 @@
 package stwf.screens.coop;
 
+import java.util.List;
+
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -20,6 +22,7 @@ import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
 import stwf.multiplayer.LobbyPlayer;
+import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
@@ -125,8 +128,13 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         if (result == MultiplayerServiceResult.OK)
         {
             lobbyId = id;
+
+            multiplayerService.setLobbyData(id, "hostName", localPlayer.profile.username);
         }
     }
+
+    @Override
+    public void onLobbiesRequested(List<MultiplayerLobby> lobbies) {}
 
     private void setPlayerListReadyButtonListener()
     {

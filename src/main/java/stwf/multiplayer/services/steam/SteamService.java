@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.codedisaster.steamworks.SteamApps;
 import com.codedisaster.steamworks.SteamFriends;
 import com.codedisaster.steamworks.SteamMatchmaking.LobbyType;
 import com.codedisaster.steamworks.SteamID;
@@ -22,10 +21,8 @@ import stwf.multiplayer.services.MultiplayerServiceResult;
 
 public class SteamService implements MultiplayerServiceInterface
 {
-    // public static SteamCallbacks callbacks;  
-    private SteamMatchmaking matchmaking;    
-    private SteamFriends friends;    
-    // private SteamNetworking net;    
+    private SteamMatchmaking matchmaking;
+    private SteamFriends friends;
     private SteamUtils utils;
 
     private SteamServiceMatchmakingCallback matchmakingCallback;
@@ -37,12 +34,11 @@ public class SteamService implements MultiplayerServiceInterface
     {
         matchmakingCallback = new SteamServiceMatchmakingCallback();
 
-        SteamApps steamApps = (SteamApps)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamApps");
-        // callbacks = new SteamCallbacks();
-        // net = new SteamNetworking(callbacks);
         matchmaking = new SteamMatchmaking(matchmakingCallback);
         utils = new SteamUtils(new SteamServiceUtilsCallback());
         friends = new SteamFriends(new SteamServiceFriendsCallback());
+
+        matchmakingCallback.matchmakingService = matchmaking;
 
         localSteamUser = (SteamUser)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamUser");
         
@@ -57,6 +53,17 @@ public class SteamService implements MultiplayerServiceInterface
     public void leaveLobby(MultiplayerServiceId id)
     {
         matchmaking.leaveLobby(SteamServiceUtils.convertGenericIdToSteamId(id));
+    }
+
+    public void getLobbies(MultiplayerServiceInterface.LobbyEventListener listener)
+    {
+        matchmakingCallback.lobbyEventListener = listener;
+        matchmaking.requestLobbyList();
+    }
+
+    public boolean setLobbyData(MultiplayerServiceId id, String key, String value)
+    {
+        return matchmaking.setLobbyData(SteamServiceUtils.convertGenericIdToSteamId(id), key, value);
     }
 
     public String getLocalUserName()

@@ -14,6 +14,7 @@ import com.megacrit.cardcrawl.screens.options.ConfirmPopup;
 import com.megacrit.cardcrawl.screens.stats.StatsScreen;
 
 import javassist.CtBehavior;
+import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.steam.SteamService;
 import stwf.screens.BaseScreenInterface;
 import stwf.screens.coop.*;
@@ -28,6 +29,7 @@ public class MainMenuScreenPatch
     private static HostGameScreen hostGameScreen;
     private static JoinGameScreen joinGameScreen;
     private static BaseScreenInterface currentScreen;
+    private static MultiplayerServiceInterface multiplayerService;
 
     /**
      * Sets the current screen to update and render.
@@ -36,11 +38,16 @@ public class MainMenuScreenPatch
      */
     public static void setCurrentScreen(MainMenuScreen.CurScreen screen)
     {
+        if (multiplayerService == null)
+        {
+            multiplayerService = new SteamService();
+        }
+
         if (screen == CurScreenPatch.HOST_GAME)
         {
             if (hostGameScreen == null)
             {
-                hostGameScreen = new HostGameScreen(new SteamService());
+                hostGameScreen = new HostGameScreen(multiplayerService);
             }
 
             currentScreen = hostGameScreen;
@@ -49,7 +56,7 @@ public class MainMenuScreenPatch
         {
             if (joinGameScreen == null)
             {
-                joinGameScreen = new JoinGameScreen();
+                joinGameScreen = new JoinGameScreen(multiplayerService);
             }
 
             currentScreen = joinGameScreen;
