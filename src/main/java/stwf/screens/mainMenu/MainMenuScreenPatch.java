@@ -1,6 +1,7 @@
 package stwf.screens.mainMenu;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
@@ -28,8 +29,20 @@ public class MainMenuScreenPatch
     private static MainMenuScreen mainMenuScreen;
     private static HostGameScreen hostGameScreen;
     private static JoinGameScreen joinGameScreen;
+    private static LobbyScreen lobbyScreen;
     private static BaseScreenInterface currentScreen;
     private static MultiplayerServiceInterface multiplayerService;
+    private static HashMap<String, Object> data;
+
+    public static void setData(String key, Object value)
+    {
+        if (data == null)
+        {
+            data = new HashMap<>();
+        }
+
+        data.put(key, value);
+    }
 
     /**
      * Sets the current screen to update and render.
@@ -61,6 +74,17 @@ public class MainMenuScreenPatch
 
             currentScreen = joinGameScreen;
         }
+        else if (screen == CurScreenPatch.LOBBY)
+        {
+            if (lobbyScreen == null)
+            {
+                lobbyScreen = new LobbyScreen(multiplayerService, data);
+            }
+
+            currentScreen = lobbyScreen;
+        }
+
+        currentScreen.open();
     }
 
     /**
@@ -272,6 +296,8 @@ public class MainMenuScreenPatch
      */
     private static boolean isPatchedScreen(CurScreen screen)
     {
-        return screen == CurScreenPatch.HOST_GAME || screen == CurScreenPatch.JOIN_GAME;
+        return screen == CurScreenPatch.HOST_GAME ||
+               screen == CurScreenPatch.JOIN_GAME ||
+               screen == CurScreenPatch.LOBBY;
     }
 }

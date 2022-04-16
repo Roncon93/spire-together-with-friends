@@ -6,4 +6,9 @@ public class Player
 {
     public PlayerProfile profile;
     public AbstractPlayer character;
+
+    public Player()
+    {
+        profile = new PlayerProfile();
+    }
 }

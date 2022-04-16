@@ -1,10 +1,14 @@
 package stwf.multiplayer.services.steam;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.codedisaster.steamworks.SteamFriends;
+import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
+import com.codedisaster.steamworks.SteamMatchmaking.LobbyComparison;
 import com.codedisaster.steamworks.SteamMatchmaking.LobbyType;
 import com.codedisaster.steamworks.SteamID;
 import com.codedisaster.steamworks.SteamMatchmaking;
@@ -14,10 +18,16 @@ import com.codedisaster.steamworks.SteamUtils;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 
 import basemod.ReflectionHacks;
+import stwf.multiplayer.MultiplayerLobby;
+import stwf.multiplayer.Player;
 import stwf.multiplayer.PlayerProfile;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbiesRequestedCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyJoinedCallback;
 
 public class SteamService implements MultiplayerServiceInterface
 {
@@ -26,6 +36,7 @@ public class SteamService implements MultiplayerServiceInterface
     private SteamUtils utils;
 
     private SteamServiceMatchmakingCallback matchmakingCallback;
+    private List<MultiplayerServiceLobbyCallback> lobbyCallbacks;
 
     private PlayerProfile localPlayer;
     private SteamUser localSteamUser;
@@ -33,37 +44,99 @@ public class SteamService implements MultiplayerServiceInterface
     public SteamService()
     {
         matchmakingCallback = new SteamServiceMatchmakingCallback();
+        lobbyCallbacks = new ArrayList<>();
 
         matchmaking = new SteamMatchmaking(matchmakingCallback);
         utils = new SteamUtils(new SteamServiceUtilsCallback());
         friends = new SteamFriends(new SteamServiceFriendsCallback());
 
         matchmakingCallback.matchmakingService = matchmaking;
+        matchmakingCallback.lobbyCallbacks = lobbyCallbacks;
 
         localSteamUser = (SteamUser)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamUser");
         
     }
 
-    public void createLobby(MultiplayerServiceInterface.LobbyEventListener listener, MultiplayerLobbyType type, int maxPlayers)
+    public void addLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
-        matchmakingCallback.lobbyEventListener = listener;
+        lobbyCallbacks.add(callback);
+    }
+
+    public void removeLobbyCallback(MultiplayerServiceLobbyCallback callback)
+    {
+        lobbyCallbacks.remove(callback);
+    }
+
+    public void createLobby(MultiplayerLobbyType type, int maxPlayers, MultiplayerServiceOnLobbyCreatedCallback callback)
+    {
+        matchmakingCallback.onLobbyCreatedCallbacks.add(callback);
         matchmaking.createLobby(SteamServiceUtils.convertGenericLobbyTypeToSteamLobbyType(type), maxPlayers);
     }
 
-    public void leaveLobby(MultiplayerServiceId id)
+    public void joinLobby(MultiplayerId id, MultiplayerServiceOnLobbyJoinedCallback callback)
+    {
+        matchmakingCallback.onLobbyJoinedCallbacks.add(callback);
+        matchmaking.joinLobby(SteamServiceUtils.convertGenericIdToSteamId(id));
+    }
+
+    public void leaveLobby(MultiplayerId id)
     {
         matchmaking.leaveLobby(SteamServiceUtils.convertGenericIdToSteamId(id));
     }
 
-    public void getLobbies(MultiplayerServiceInterface.LobbyEventListener listener)
+    public void getLobbies(MultiplayerServiceOnLobbiesRequestedCallback callback)
     {
-        matchmakingCallback.lobbyEventListener = listener;
+        matchmakingCallback.onLobbiesRequestedCallbacks.add(callback);
+
+        matchmaking.addRequestLobbyListStringFilter("mod", "stwf", LobbyComparison.Equal);
         matchmaking.requestLobbyList();
     }
 
-    public boolean setLobbyData(MultiplayerServiceId id, String key, String value)
+    public MultiplayerLobby getLobby(MultiplayerId id)
+    {
+        SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(id);
+
+        MultiplayerLobby lobby = new MultiplayerLobby();
+        lobby.id = id;
+
+        Player localPlayer = new Player();
+        localPlayer.profile = getLocalPlayerProfile();
+
+        lobby.players.add(localPlayer);
+
+        int numOfMembers = matchmaking.getNumLobbyMembers(lobbySteamId);
+
+        for (int index = 0; index < numOfMembers; index++)
+        {
+            SteamID memberId = matchmaking.getLobbyMemberByIndex(lobbySteamId, index);
+            String memberUsername = friends.getFriendPersonaName(memberId);
+
+            Player player = new Player();
+            player.profile.id = SteamServiceUtils.convertSteamIdToGenericId(memberId);
+            player.profile.username = memberUsername + " #" + (index + 1);
+            player.profile.avatar = getPlayerAvatar(memberId);
+
+            lobby.players.add(player);
+        }
+
+        return lobby;
+    }
+
+    public boolean setLobbyData(MultiplayerId id, String key, String value)
     {
         return matchmaking.setLobbyData(SteamServiceUtils.convertGenericIdToSteamId(id), key, value);
+    }
+
+    public Player getPlayer(MultiplayerId playerId)
+    {
+        SteamID playerSteamId = SteamServiceUtils.convertGenericIdToSteamId(playerId);
+
+        Player player = new Player();
+        player.profile.id = playerId;
+        player.profile.username = friends.getFriendPersonaName(playerSteamId);
+        player.profile.avatar = getPlayerAvatar(playerSteamId);
+
+        return player;
     }
 
     public String getLocalUserName()
@@ -76,6 +149,7 @@ public class SteamService implements MultiplayerServiceInterface
         if (localPlayer == null)
         {
             localPlayer = new PlayerProfile();
+            localPlayer.id = SteamServiceUtils.convertSteamIdToGenericId(localSteamUser.getSteamID());
             localPlayer.username = friends.getPersonaName();
             localPlayer.avatar = getPlayerAvatar(localSteamUser.getSteamID());
         }
@@ -114,7 +188,7 @@ public class SteamService implements MultiplayerServiceInterface
 
     public static class SteamServiceUtils
     {
-        public static SteamID convertGenericIdToSteamId(MultiplayerServiceId id)
+        public static SteamID convertGenericIdToSteamId(MultiplayerId id)
         {
             return id.steamId;
         }
@@ -134,17 +208,27 @@ public class SteamService implements MultiplayerServiceInterface
             return MultiplayerServiceResult.FAIL;
         }
 
-        public static MultiplayerServiceId convertSteamIdToGenericId(SteamID id)
+        public static MultiplayerServiceResult convertSteamResultToGenericResult(ChatRoomEnterResponse result)
         {
-            return new MultiplayerServiceId(id);
+            if (result == ChatRoomEnterResponse.Success)
+            {
+                return MultiplayerServiceResult.OK;
+            }
+
+            return MultiplayerServiceResult.FAIL;
+        }
+
+        public static MultiplayerId convertSteamIdToGenericId(SteamID id)
+        {
+            return new MultiplayerId(id);
         }
     }
     
-    public static class MultiplayerServiceId
+    public static class MultiplayerId
     {
         private final SteamID steamId;
 
-        public MultiplayerServiceId(SteamID id)
+        public MultiplayerId(SteamID id)
         {
             steamId = id;
         }

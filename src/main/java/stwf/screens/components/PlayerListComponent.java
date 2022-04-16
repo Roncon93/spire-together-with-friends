@@ -33,7 +33,7 @@ public class PlayerListComponent extends BaseComponent
         button = new ButtonComponent();
         playerListItems = new CopyOnWriteArrayList<>();
 
-        banner.label = GetLobbyUIString(12);
+        banner.label = getLobbyUIString(12);
 
         setReady(true);
 
@@ -45,17 +45,24 @@ public class PlayerListComponent extends BaseComponent
      * @param index The index of the string to retrieve.
      * @return The UI string found with the index.
      */
-    private String GetLobbyUIString(int index)
+    private String getLobbyUIString(int index)
     {
         return CardCrawlGame.languagePack.getUIString("Lobby").TEXT[index];
     }
 
-    public void AddPlayer(LobbyPlayer player)
+    public void add(LobbyPlayer player)
     {
         PlayerListItemComponent item = new PlayerListItemComponent();
         item.player = player;
 
         playerListItems.add(item);
+
+        move(x, y);
+    }
+
+    public void clear()
+    {
+        playerListItems.clear();
     }
 
     /**
@@ -74,7 +81,7 @@ public class PlayerListComponent extends BaseComponent
 
     public void setReady(boolean isReady)
     {
-        button.label = isReady ? GetLobbyUIString(UNREADY_TEXT_INDEX) : GetLobbyUIString(READY_TEXT_INDEX);
+        button.label = isReady ? getLobbyUIString(UNREADY_TEXT_INDEX) : getLobbyUIString(READY_TEXT_INDEX);
     }
 
     @Override

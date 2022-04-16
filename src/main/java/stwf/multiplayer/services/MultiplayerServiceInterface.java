@@ -1,27 +1,33 @@
 package stwf.multiplayer.services;
 
-import java.util.List;
-
 import stwf.multiplayer.MultiplayerLobby;
+import stwf.multiplayer.Player;
 import stwf.multiplayer.PlayerProfile;
-import stwf.multiplayer.services.steam.SteamService.MultiplayerServiceId;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbiesRequestedCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyJoinedCallback;
+import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 
 public interface MultiplayerServiceInterface
 {
-    public interface LobbyEventListener
-    {
-        void onLobbyCreated(MultiplayerServiceResult result, MultiplayerServiceId id);
-
-        void onLobbiesRequested(List<MultiplayerLobby> lobbies);
-    }
+    Player getPlayer(MultiplayerId playerId);
 
     PlayerProfile getLocalPlayerProfile();
 
-    void createLobby(MultiplayerServiceInterface.LobbyEventListener listener, MultiplayerLobbyType type, int maxPlayers);
+    void addLobbyCallback(MultiplayerServiceLobbyCallback callback);
 
-    void leaveLobby(MultiplayerServiceId id);
+    void removeLobbyCallback(MultiplayerServiceLobbyCallback callback);
 
-    void getLobbies(MultiplayerServiceInterface.LobbyEventListener listener);
+    void createLobby(MultiplayerLobbyType type, int maxPlayers, MultiplayerServiceOnLobbyCreatedCallback callback);
 
-    boolean setLobbyData(MultiplayerServiceId id, String key, String value);
+    void joinLobby(MultiplayerId id, MultiplayerServiceOnLobbyJoinedCallback callback);
+
+    void leaveLobby(MultiplayerId id);
+
+    void getLobbies(MultiplayerServiceOnLobbiesRequestedCallback callback);
+
+    boolean setLobbyData(MultiplayerId id, String key, String value);
+
+    MultiplayerLobby getLobby(MultiplayerId id);
 }

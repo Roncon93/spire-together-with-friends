@@ -1,7 +1,5 @@
 package stwf.screens.coop;
 
-import java.util.List;
-
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -22,11 +20,12 @@ import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
 import stwf.multiplayer.LobbyPlayer;
-import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
-import stwf.multiplayer.services.steam.SteamService.MultiplayerServiceId;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
+import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 import stwf.screens.BaseScreenInterface;
 import stwf.screens.components.BaseButtonComponent;
 import stwf.screens.components.ButtonListenerInterface;
@@ -35,7 +34,7 @@ import stwf.screens.components.LabelComponent;
 import stwf.screens.components.PlayerListComponent;
 import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
 
-public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceInterface.LobbyEventListener
+public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceOnLobbyCreatedCallback, MultiplayerServiceLobbyCallback
 {
     public MenuCancelButton returnButton;
     public GridSelectConfirmButton embarkButton;
@@ -50,7 +49,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     private LobbyPlayer localPlayer;
 
     private MultiplayerServiceInterface multiplayerService;
-    private MultiplayerServiceId lobbyId;
+    private MultiplayerId lobbyId;
 
     public HostGameScreen(MultiplayerServiceInterface multiplayerService)
     {
@@ -67,7 +66,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         
         localPlayer = new LobbyPlayer();
         localPlayer.profile = multiplayerService.getLocalPlayerProfile();
-        playerList.AddPlayer(localPlayer);
+        playerList.add(localPlayer);
 
         this.multiplayerService = multiplayerService;
     }
@@ -96,7 +95,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
         localPlayer.isReady = false;
 
-        multiplayerService.createLobby(this, MultiplayerLobbyType.PUBLIC, 2);
+        multiplayerService.addLobbyCallback(this);
+        multiplayerService.createLobby(MultiplayerLobbyType.PUBLIC, 2, this);
     }
 
     @Override
@@ -107,9 +107,11 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         
         returnButton.hide();
         embarkButton.hide();
+        playerList.clear();
 
         dispose();
 
+        multiplayerService.removeLobbyCallback(this);
         multiplayerService.leaveLobby(lobbyId);
     }
 
@@ -123,7 +125,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     }
 
     @Override
-    public void onLobbyCreated(MultiplayerServiceResult result, MultiplayerServiceId id)
+    public void onLobbyCreated(MultiplayerServiceResult result, MultiplayerId id)
     {
         if (result == MultiplayerServiceResult.OK)
         {
@@ -134,7 +136,15 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     }
 
     @Override
-    public void onLobbiesRequested(List<MultiplayerLobby> lobbies) {}
+    public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId)
+    {
+        playerList.add(new LobbyPlayer(multiplayerService.getPlayer(playerId)));
+    }
+
+    @Override
+    public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId)
+    {
+    }
 
     private void setPlayerListReadyButtonListener()
     {

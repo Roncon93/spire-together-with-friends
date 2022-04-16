@@ -121,12 +121,10 @@ public class MenuButtonsPatch
             else if (__instance.result == HOST_GAME)
             {
                 MainMenuScreenPatch.setCurrentScreen(CurScreenPatch.HOST_GAME);
-                MainMenuScreenPatch.getCurrentScreen().open();
             }
             else if (__instance.result == JOIN_GAME)
             {
                 MainMenuScreenPatch.setCurrentScreen(CurScreenPatch.JOIN_GAME);
-                MainMenuScreenPatch.getCurrentScreen().open();
             }
             else if (__instance.result == BACK)
             {

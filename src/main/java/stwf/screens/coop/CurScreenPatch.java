@@ -13,4 +13,7 @@ public class CurScreenPatch
 
     @SpireEnum
     public static MainMenuScreen.CurScreen JOIN_GAME;
+
+    @SpireEnum
+    public static MainMenuScreen.CurScreen LOBBY;
 }

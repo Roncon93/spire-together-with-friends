@@ -1,6 +1,9 @@
 package stwf.multiplayer.services.steam;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 
 import com.codedisaster.steamworks.SteamID;
 import com.codedisaster.steamworks.SteamMatchmaking;
@@ -9,7 +12,11 @@ import com.codedisaster.steamworks.SteamMatchmaking.ChatMemberStateChange;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
 
 import stwf.multiplayer.MultiplayerLobby;
-import stwf.multiplayer.services.MultiplayerServiceInterface;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbiesRequestedCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyJoinedCallback;
+import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 import stwf.multiplayer.services.steam.SteamService.SteamServiceUtils;
 
 import com.codedisaster.steamworks.SteamMatchmakingCallback;
@@ -17,8 +24,18 @@ import com.codedisaster.steamworks.SteamResult;
 
 public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
 {
-    public MultiplayerServiceInterface.LobbyEventListener lobbyEventListener;
     public SteamMatchmaking matchmakingService;
+    public Queue<MultiplayerServiceOnLobbyCreatedCallback> onLobbyCreatedCallbacks;
+    public Queue<MultiplayerServiceOnLobbyJoinedCallback> onLobbyJoinedCallbacks;
+    public Queue<MultiplayerServiceOnLobbiesRequestedCallback> onLobbiesRequestedCallbacks;
+    public List<MultiplayerServiceLobbyCallback> lobbyCallbacks;
+
+    public SteamServiceMatchmakingCallback()
+    {
+        onLobbyCreatedCallbacks = new ArrayDeque<MultiplayerServiceOnLobbyCreatedCallback>();
+        onLobbyJoinedCallbacks = new ArrayDeque<MultiplayerServiceOnLobbyJoinedCallback>();
+        onLobbiesRequestedCallbacks = new ArrayDeque<MultiplayerServiceOnLobbiesRequestedCallback>();
+    }
 
     @Override
     public void onFavoritesListAccountsUpdated(SteamResult arg0) {
@@ -39,18 +56,37 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     }
 
     @Override
-    public void onLobbyChatUpdate(SteamID arg0, SteamID arg1, SteamID arg2, ChatMemberStateChange arg3) {
-        // TODO Auto-generated method stub
-        
+    public void onLobbyChatUpdate(SteamID lobbyId, SteamID playerId, SteamID hostId, ChatMemberStateChange state)
+    {
+        if (lobbyCallbacks != null)
+        {
+            MultiplayerId genericLobbyId = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
+            MultiplayerId genericPlayerId = SteamServiceUtils.convertSteamIdToGenericId(playerId);
+
+            for (MultiplayerServiceLobbyCallback callback : lobbyCallbacks)
+            {
+                if (state == ChatMemberStateChange.Entered)
+                {
+                    callback.onPlayerJoined(genericLobbyId, genericPlayerId);
+                }
+                else
+                {
+                    callback.onPlayerLeft(genericLobbyId, genericPlayerId);
+                }
+            }
+        }
     }
 
     @Override
     public void onLobbyCreated(SteamResult result, SteamID id)
     {
-        if (lobbyEventListener != null)
+        matchmakingService.setLobbyData(id, "mod", "stwf");
+
+        if (!onLobbyCreatedCallbacks.isEmpty())
         {
-            lobbyEventListener.onLobbyCreated(SteamServiceUtils.convertSteamResultToGenericResult(result), SteamServiceUtils.convertSteamIdToGenericId(id));
-        }        
+            MultiplayerServiceOnLobbyCreatedCallback callback = onLobbyCreatedCallbacks.remove();
+            callback.onLobbyCreated(SteamServiceUtils.convertSteamResultToGenericResult(result), SteamServiceUtils.convertSteamIdToGenericId(id));
+        }
     }
 
     @Override
@@ -60,9 +96,13 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     }
 
     @Override
-    public void onLobbyEnter(SteamID arg0, int arg1, boolean arg2, ChatRoomEnterResponse arg3) {
-        // TODO Auto-generated method stub
-        
+    public void onLobbyEnter(SteamID id, int arg1, boolean arg2, ChatRoomEnterResponse response)
+    {
+        if (!onLobbyJoinedCallbacks.isEmpty())
+        {
+            MultiplayerServiceOnLobbyJoinedCallback callback = onLobbyJoinedCallbacks.remove();
+            callback.onLobbyJoined(SteamServiceUtils.convertSteamResultToGenericResult(response), SteamServiceUtils.convertSteamIdToGenericId(id));
+        }
     }
 
     @Override
@@ -86,7 +126,7 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     @Override
     public void onLobbyMatchList(int lobbiesMatched)
     {
-        ArrayList<MultiplayerLobby> lobbies = new ArrayList<>();
+        List<MultiplayerLobby> lobbies = new ArrayList<>();
 
         if (matchmakingService != null)
         {
@@ -104,9 +144,10 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
             }
         }
 
-        if (lobbyEventListener != null)
+        if (!onLobbiesRequestedCallbacks.isEmpty())
         {
-            lobbyEventListener.onLobbiesRequested(lobbies);
+            MultiplayerServiceOnLobbiesRequestedCallback callback = onLobbiesRequestedCallbacks.remove();
+            callback.onLobbiesRequested(lobbies);
         }
     }
 }

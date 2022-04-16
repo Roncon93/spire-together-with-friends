@@ -1,12 +1,22 @@
 package stwf.multiplayer;
 
-import stwf.multiplayer.services.steam.SteamService.MultiplayerServiceId;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 
 public class MultiplayerLobby
 {
-    public MultiplayerServiceId id;
+    public MultiplayerId id;
 
-    public MultiplayerServiceId hostId;
+    public MultiplayerId hostId;
 
     public String hostName;
+
+    public List<Player> players;
+
+    public MultiplayerLobby()
+    {
+        players = new CopyOnWriteArrayList<>();
+    }
 }
