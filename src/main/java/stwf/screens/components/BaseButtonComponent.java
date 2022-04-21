@@ -1,5 +1,7 @@
 package stwf.screens.components;
 
+import java.util.ArrayList;
+
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
@@ -9,7 +11,7 @@ public abstract class BaseButtonComponent extends BaseComponent
     public static final String DEFAULT_SOUND_HOVER = "UI_HOVER";
     public static final String DEFAULT_SOUND_CLICK = "UI_CLICK_1";
 
-    public ButtonListenerInterface listener;
+    public ArrayList<ButtonListenerInterface> listeners;
     public Hitbox hitbox;
     public float width;
     public float height;
@@ -32,6 +34,8 @@ public abstract class BaseButtonComponent extends BaseComponent
         clickSound = DEFAULT_SOUND_CLICK;
 
         isDisabled = false;
+
+        listeners = new ArrayList<>();
     }
 
     /**
@@ -104,7 +108,7 @@ public abstract class BaseButtonComponent extends BaseComponent
     {
         CardCrawlGame.sound.playA(clickSound, -0.4F);
 
-        if (listener != null)
+        for (ButtonListenerInterface listener : listeners)
         {
             listener.onClick(this);
         }

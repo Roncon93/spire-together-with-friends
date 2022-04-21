@@ -7,6 +7,7 @@ import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 
 import stwf.multiplayer.LobbyPlayer;
+import stwf.multiplayer.PlayerProfile;
 
 public class PlayerListItemComponent extends BaseComponent
 {
@@ -37,7 +38,7 @@ public class PlayerListItemComponent extends BaseComponent
     {
         if (player != null)
         {
-            return player.character == null ? NONE_CHARACTER_SELECTED_NAME : player.character.getLocalizedCharacterName();
+            return player.player.character == null ? NONE_CHARACTER_SELECTED_NAME : player.player.character.getLocalizedCharacterName();
         }
 
         return NONE_CHARACTER_SELECTED_NAME;
@@ -51,12 +52,14 @@ public class PlayerListItemComponent extends BaseComponent
 
     private void renderPlayerInfo(SpriteBatch spriteBatch, int index)
     {
-        FontHelper.renderSmartText(spriteBatch, FontHelper.topPanelInfoFont, player.profile.username, x - 112.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale + 16.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Settings.CREAM_COLOR, 1);
+        PlayerProfile profile = player.player.profile;
+
+        FontHelper.renderSmartText(spriteBatch, FontHelper.topPanelInfoFont, profile.username, x - 112.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale + 16.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Settings.CREAM_COLOR, 1);
         FontHelper.renderSmartText(spriteBatch, FontHelper.cardTypeFont, getCharacterName(), x - 100.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 10.0F * Settings.scale, 1000.0F * Settings.scale, 0.0F, Color.DARK_GRAY, 1.0F);
 
-        if (player.profile.avatar != null)
+        if (profile.avatar != null)
         {
-            spriteBatch.draw(player.profile.avatar, x - 28.0F - 164.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 28.0F - 2.0F * Settings.scale, 28.0F, 28.0F, 56.0F, 56.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, player.profile.avatar.getWidth(), player.profile.avatar.getHeight(), false, false);
+            spriteBatch.draw(profile.avatar, x - 28.0F - 164.0F * Settings.scale, y + scroll - index * 75.0F * Settings.scale - 28.0F - 2.0F * Settings.scale, 28.0F, 28.0F, 56.0F, 56.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, profile.avatar.getWidth(), profile.avatar.getHeight(), false, false);
         }
     }
 

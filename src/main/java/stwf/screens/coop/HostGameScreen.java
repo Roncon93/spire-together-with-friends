@@ -43,7 +43,6 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     public LabelComponent titleLabel;
 
     private Color bgCharColor = new Color(1.0F, 1.0F, 1.0F, 1.0F);
-    private float bg_y_offset = 0.0F;
 
     private Texture selectedCharacterPortraitImage;
     private LobbyPlayer localPlayer;
@@ -65,8 +64,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         titleLabel.color = Settings.GOLD_COLOR;
         
         localPlayer = new LobbyPlayer();
-        localPlayer.profile = multiplayerService.getLocalPlayerProfile();
-        playerList.add(localPlayer);
+        localPlayer.player.profile = multiplayerService.getLocalPlayerProfile();
 
         this.multiplayerService = multiplayerService;
     }
@@ -90,6 +88,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
         playerList.setReadyButtonDisabled(true);
         playerList.setReady(false);
+        playerList.clear();
+        playerList.add(localPlayer);
 
         setPlayerListReadyButtonListener();
 
@@ -131,7 +131,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         {
             lobbyId = id;
 
-            multiplayerService.setLobbyData(id, "hostName", localPlayer.profile.username);
+            multiplayerService.setLobbyData(id, "hostName", localPlayer.player.profile.username);
         }
     }
 
@@ -144,18 +144,20 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     @Override
     public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId)
     {
+        LobbyPlayer player = new LobbyPlayer();
+        player.player.profile.id = playerId;
+
+        playerList.remove(player);
     }
 
     private void setPlayerListReadyButtonListener()
     {
-        playerList.setReadyButtonListener(new ButtonListenerInterface()
+        playerList.addReadyButtonListener(new ButtonListenerInterface()
         {
             @Override
             public void onClick(BaseButtonComponent button)
             {
                 localPlayer.isReady = !localPlayer.isReady;
-
-                playerList.setReady(localPlayer.isReady);
 
                 characterSelect.setDisabled(localPlayer.isReady);
 
@@ -172,7 +174,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         selectedCharacterPortraitImage = ImageMaster.loadImage("images/ui/charSelect/" + character.getPortraitImageName());
         character.doCharSelectScreenSelectEffect();
 
-        localPlayer.character = character;
+        localPlayer.player.character = character;
 
         playerList.setReadyButtonDisabled(false);
     }
@@ -201,7 +203,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
             setRandomSeed();
 
-            CardCrawlGame.chosenCharacter = localPlayer.character.chosenClass;
+            CardCrawlGame.chosenCharacter = localPlayer.player.character.chosenClass;
 
             CardCrawlGame.mainMenuScreen.isFadingOut = true;
             CardCrawlGame.mainMenuScreen.fadeOutMusic();
@@ -241,15 +243,15 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
             }
             else if (Settings.isFourByThree)
             {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F + this.bg_y_offset, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.yScale, Settings.yScale, 0.0F, 0, 0, 1920, 1200, false, false);
+                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.yScale, Settings.yScale, 0.0F, 0, 0, 1920, 1200, false, false);
             }
             else if (Settings.isLetterbox)
             {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F + this.bg_y_offset, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.xScale, Settings.xScale, 0.0F, 0, 0, 1920, 1200, false, false);
+                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.xScale, Settings.xScale, 0.0F, 0, 0, 1920, 1200, false, false);
             }
             else
             {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F + this.bg_y_offset, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 1920, 1200, false, false);
+                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 1920, 1200, false, false);
             } 
         }
 

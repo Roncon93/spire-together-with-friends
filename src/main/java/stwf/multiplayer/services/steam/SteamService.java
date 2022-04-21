@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.codedisaster.steamworks.SteamFriends;
@@ -99,11 +100,6 @@ public class SteamService implements MultiplayerServiceInterface
         MultiplayerLobby lobby = new MultiplayerLobby();
         lobby.id = id;
 
-        Player localPlayer = new Player();
-        localPlayer.profile = getLocalPlayerProfile();
-
-        lobby.players.add(localPlayer);
-
         int numOfMembers = matchmaking.getNumLobbyMembers(lobbySteamId);
 
         for (int index = 0; index < numOfMembers; index++)
@@ -112,8 +108,9 @@ public class SteamService implements MultiplayerServiceInterface
             String memberUsername = friends.getFriendPersonaName(memberId);
 
             Player player = new Player();
+            player.isLocal = memberId.equals(localSteamUser.getSteamID());
             player.profile.id = SteamServiceUtils.convertSteamIdToGenericId(memberId);
-            player.profile.username = memberUsername + " #" + (index + 1);
+            player.profile.username = memberUsername;
             player.profile.avatar = getPlayerAvatar(memberId);
 
             lobby.players.add(player);
@@ -134,7 +131,13 @@ public class SteamService implements MultiplayerServiceInterface
         Player player = new Player();
         player.profile.id = playerId;
         player.profile.username = friends.getFriendPersonaName(playerSteamId);
-        player.profile.avatar = getPlayerAvatar(playerSteamId);
+
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                player.profile.avatar = getPlayerAvatar(playerSteamId);
+            }
+        });
 
         return player;
     }
@@ -242,6 +245,12 @@ public class SteamService implements MultiplayerServiceInterface
             }
 
             return super.toString();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            MultiplayerId other = (MultiplayerId)obj;
+            return steamId.equals(other.steamId);            
         }
     }
 }

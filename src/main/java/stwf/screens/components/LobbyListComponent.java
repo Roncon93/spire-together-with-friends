@@ -38,7 +38,7 @@ public class LobbyListComponent extends BaseComponent implements ButtonListenerI
         for (JoinGameScreen.Lobby lobby : lobbies)
         {
             LobbyListItemComponent newLobby = new LobbyListItemComponent(lobby);
-            newLobby.listener = this;
+            newLobby.listeners.add(this);
 
             this.lobbies.add(newLobby);
         }

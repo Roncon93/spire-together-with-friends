@@ -3,6 +3,7 @@ package stwf.screens.components;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
@@ -18,6 +19,7 @@ public class PlayerListComponent extends BaseComponent
     private BannerComponent banner;
     private ButtonComponent button;
     private List<PlayerListItemComponent> playerListItems;
+    private boolean isReady;
 
     public PlayerListComponent()
     {
@@ -32,11 +34,21 @@ public class PlayerListComponent extends BaseComponent
         banner = new BannerComponent();
         button = new ButtonComponent();
         playerListItems = new CopyOnWriteArrayList<>();
+        isReady = false;
 
         banner.label = getLobbyUIString(12);
 
         setReady(true);
 
+        button.listeners.add(new ButtonListenerInterface()
+        {
+            @Override
+            public void onClick(BaseButtonComponent baseButton)
+            {
+                isReady = !isReady;
+                button.label = isReady ? getLobbyUIString(UNREADY_TEXT_INDEX) : getLobbyUIString(READY_TEXT_INDEX);
+            }
+        });
         button.show();
     }
 
@@ -60,6 +72,27 @@ public class PlayerListComponent extends BaseComponent
         move(x, y);
     }
 
+    public void remove(LobbyPlayer player)
+    {
+        playerListItems.removeIf((item) -> 
+        {
+            boolean found = item.player.player.profile.id.equals(player.player.profile.id);
+            if (found)
+            {
+                Gdx.app.postRunnable(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        item.player.player.profile.avatar.dispose();
+                    }
+                });
+            }
+            
+            return found;
+        });
+    }
+
     public void clear()
     {
         playerListItems.clear();
@@ -69,9 +102,9 @@ public class PlayerListComponent extends BaseComponent
      * Sets the ButtonComponentListener for the ready button.
      * @param listener
      */
-    public void setReadyButtonListener(ButtonListenerInterface listener)
+    public void addReadyButtonListener(ButtonListenerInterface listener)
     {
-        button.listener = listener;
+        button.listeners.add(listener);
     }
 
     public void setReadyButtonDisabled(boolean isDisabled)
@@ -105,7 +138,7 @@ public class PlayerListComponent extends BaseComponent
     @Override
     public void update()
     {
-        button.update();    
+        button.update();  
     }
 
     @Override

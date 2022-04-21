@@ -16,7 +16,6 @@ public class ButtonComponent extends BaseButtonComponent
 {
     public final Hitbox hitbox;
     public String label;
-    public ButtonListenerInterface listener;
 
     private static final Color HOVER_BLEND_COLOR = new Color(1.0F, 1.0F, 1.0F, 0.3F);
     private static final Color BUTTON_SHADOW_COLOR = new Color(0.0F, 0.0F, 0.0F, 0.2F);
@@ -91,7 +90,7 @@ public class ButtonComponent extends BaseButtonComponent
                 hitbox.clickStarted = true;
                 CardCrawlGame.sound.play("UI_CLICK_1");
 
-                if (listener != null)
+                for (ButtonListenerInterface listener : listeners)
                 {
                     listener.onClick(this);
                 }

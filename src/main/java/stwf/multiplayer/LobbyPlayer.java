@@ -1,8 +1,9 @@
 package stwf.multiplayer;
 
-public class LobbyPlayer extends Player
+public class LobbyPlayer
 {
     public boolean isReady;
+    public Player player;
 
     public LobbyPlayer()
     {
@@ -13,7 +14,6 @@ public class LobbyPlayer extends Player
     {
         this();
         
-        profile = player.profile;
-        character = player.character;        
+        this.player = player;      
     }
 }
