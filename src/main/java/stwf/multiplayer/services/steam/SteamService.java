@@ -22,6 +22,7 @@ import basemod.ReflectionHacks;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.Player;
 import stwf.multiplayer.PlayerProfile;
+import stwf.multiplayer.Actions.MultiplayerAction;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
@@ -122,6 +123,11 @@ public class SteamService implements MultiplayerServiceInterface
     public boolean setLobbyData(MultiplayerId id, String key, String value)
     {
         return matchmaking.setLobbyData(SteamServiceUtils.convertGenericIdToSteamId(id), key, value);
+    }
+
+    public void sendPlayerAction(MultiplayerId lobbyId, MultiplayerAction action)
+    {
+        matchmaking.setLobbyMemberData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), "action", action.toString());
     }
 
     public Player getPlayer(MultiplayerId playerId)

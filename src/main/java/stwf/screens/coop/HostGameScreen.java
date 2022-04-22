@@ -1,9 +1,17 @@
 package stwf.screens.coop;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.characters.AbstractPlayer.PlayerClass;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
@@ -19,7 +27,11 @@ import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
+import javassist.expr.Instanceof;
 import stwf.multiplayer.LobbyPlayer;
+import stwf.multiplayer.Actions.CharacterSelectedAction;
+import stwf.multiplayer.Actions.MultiplayerAction;
+import stwf.multiplayer.Actions.ReadyStatusUpdatedAction;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
@@ -161,9 +173,33 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
                 characterSelect.setDisabled(localPlayer.isReady);
 
-                embarkButton.isDisabled = !localPlayer.isReady;
+                //embarkButton.isDisabled = !localPlayer.isReady;
+
+                multiplayerService.sendPlayerAction(lobbyId, new ReadyStatusUpdatedAction(localPlayer.isReady));
             }
         });
+    }
+
+    @Override
+    public void onPlayerActionReceived(MultiplayerId lobbyId, MultiplayerId playerId, MultiplayerAction action)
+    {
+        LobbyPlayer player = new LobbyPlayer();
+        player.player.profile.id = playerId;
+        player = playerList.get(player);
+
+        if (player == null)
+        {
+            return;
+        }
+
+        if (action instanceof CharacterSelectedAction)
+        {
+            player.player.character = CardCrawlGame.characterManager.getCharacter(((CharacterSelectedAction)action).value);
+        }
+        else if (action instanceof ReadyStatusUpdatedAction)
+        {
+            player.isReady = ((ReadyStatusUpdatedAction)action).value;
+        }
     }
 
     @Override
@@ -174,9 +210,9 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         selectedCharacterPortraitImage = ImageMaster.loadImage("images/ui/charSelect/" + character.getPortraitImageName());
         character.doCharSelectScreenSelectEffect();
 
-        localPlayer.player.character = character;
-
         playerList.setReadyButtonDisabled(false);
+
+        multiplayerService.sendPlayerAction(lobbyId, new CharacterSelectedAction(character.chosenClass));
     }
 
     @Override

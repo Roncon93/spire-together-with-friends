@@ -7,13 +7,12 @@ public class LobbyPlayer
 
     public LobbyPlayer()
     {
-        isReady = false;        
+        this(new Player());
     }
 
     public LobbyPlayer(Player player)
     {
-        this();
-        
+        isReady = false;
         this.player = player;      
     }
 }

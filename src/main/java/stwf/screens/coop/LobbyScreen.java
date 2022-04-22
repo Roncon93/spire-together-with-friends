@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
@@ -15,7 +16,11 @@ import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 import stwf.multiplayer.LobbyPlayer;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.Player;
+import stwf.multiplayer.Actions.CharacterSelectedAction;
+import stwf.multiplayer.Actions.MultiplayerAction;
+import stwf.multiplayer.Actions.ReadyStatusUpdatedAction;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
+import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 import stwf.screens.BaseScreenInterface;
 import stwf.screens.components.BaseButtonComponent;
@@ -25,17 +30,17 @@ import stwf.screens.components.PlayerListComponent;
 import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
 import stwf.screens.mainMenu.MainMenuScreenPatch;
 
-public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponentListener
+public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceLobbyCallback
 {
     private static final Color BACKGROUND_COLOR = new Color(1.0F, 1.0F, 1.0F, 1.0F);
 
-    private MenuCancelButton returnButton;
-    private PlayerListComponent playerList;
-    private CharacterSelectComponent characterSelect;
-    private MultiplayerServiceInterface multiplayerService;
-    private MultiplayerLobby lobby;
-    private Texture selectedCharacterPortraitImage;
-    private LobbyPlayer localPlayer;
+    protected MenuCancelButton returnButton;
+    protected PlayerListComponent playerList;
+    protected CharacterSelectComponent characterSelect;
+    protected MultiplayerServiceInterface multiplayerService;
+    protected MultiplayerLobby lobby;
+    protected Texture selectedCharacterPortraitImage;
+    protected LobbyPlayer localPlayer;
 
     public LobbyScreen(MultiplayerServiceInterface multiplayerService, HashMap<String, Object> data)
     {
@@ -58,6 +63,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             public void onClick(BaseButtonComponent button)
             {
                 localPlayer.isReady = !localPlayer.isReady;
+                multiplayerService.sendPlayerAction(lobby.id, new ReadyStatusUpdatedAction(localPlayer.isReady));
             }
         });
     }
@@ -87,6 +93,8 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         characterSelect.move(Settings.WIDTH * 0.5f, Settings.HEIGHT * 0.31F);
         characterSelect.enable();
         characterSelect.deselect();
+
+        multiplayerService.addLobbyCallback(this);
     }
 
     @Override
@@ -96,6 +104,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         returnButton.hide();
         playerList.clear();
 
+        multiplayerService.removeLobbyCallback(this);
         multiplayerService.leaveLobby(lobby.id);
 
         dispose();
@@ -163,7 +172,41 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         character.doCharSelectScreenSelectEffect();
 
         playerList.setReadyButtonDisabled(false);
+
+        multiplayerService.sendPlayerAction(lobby.id, new CharacterSelectedAction(character.chosenClass));
+    }
+
+    @Override
+    public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId) {
+        // TODO Auto-generated method stub
         
-        localPlayer.player.character = character;
+    }
+
+    @Override
+    public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void onPlayerActionReceived(MultiplayerId lobbyId, MultiplayerId playerId, MultiplayerAction action)
+    {
+        LobbyPlayer player = new LobbyPlayer();
+        player.player.profile.id = playerId;
+        player = playerList.get(player);
+
+        if (player == null)
+        {
+            return;
+        }
+
+        if (action instanceof CharacterSelectedAction)
+        {
+            player.player.character = CardCrawlGame.characterManager.getCharacter(((CharacterSelectedAction)action).value);
+        }
+        else if (action instanceof ReadyStatusUpdatedAction)
+        {
+            player.isReady = ((ReadyStatusUpdatedAction)action).value;
+        }
     }
 }

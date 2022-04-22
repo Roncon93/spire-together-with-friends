@@ -12,6 +12,7 @@ import com.codedisaster.steamworks.SteamMatchmaking.ChatMemberStateChange;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
 
 import stwf.multiplayer.MultiplayerLobby;
+import stwf.multiplayer.Actions.MultiplayerAction;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbiesRequestedCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
@@ -90,9 +91,19 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     }
 
     @Override
-    public void onLobbyDataUpdate(SteamID arg0, SteamID arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-        
+    public void onLobbyDataUpdate(SteamID lobbyId, SteamID playerId, boolean success)
+    {
+        if (!lobbyId.equals(playerId))
+        {
+            String payload = matchmakingService.getLobbyMemberData(lobbyId, playerId, "action");
+            MultiplayerId genericLobbyId = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
+            MultiplayerId genericPlayerId = SteamServiceUtils.convertSteamIdToGenericId(playerId);
+
+            for (MultiplayerServiceLobbyCallback callback : lobbyCallbacks)
+            {
+                callback.onPlayerActionReceived(genericLobbyId, genericPlayerId, MultiplayerAction.fromJson(payload));
+            }
+        }
     }
 
     @Override

@@ -72,6 +72,23 @@ public class PlayerListComponent extends BaseComponent
         move(x, y);
     }
 
+    public LobbyPlayer get(LobbyPlayer player)
+    {
+        System.out.println("Looking for player with ID " + player.player.profile.id);
+
+        for (PlayerListItemComponent item : playerListItems)
+        {
+            System.out.println("    Current player ID " + item.player.player.profile.id);
+
+            if (item.player.player.profile.id.equals(player.player.profile.id))
+            {
+                return item.player;
+            }
+        }
+
+        return null;
+    }
+
     public void remove(LobbyPlayer player)
     {
         playerListItems.removeIf((item) -> 
