@@ -1,5 +1,7 @@
 package stwf.screens;
 
+import java.util.HashMap;
+
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public interface BaseScreenInterface
@@ -7,7 +9,7 @@ public interface BaseScreenInterface
     /**
      * Readies the screen components for showing.
      */
-    void open();
+    void open(HashMap<String, Object> data);
 
     /**
      * Hides the screen components.

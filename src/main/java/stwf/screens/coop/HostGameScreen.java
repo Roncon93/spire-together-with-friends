@@ -1,17 +1,9 @@
 package stwf.screens.coop;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.Json;
-import com.badlogic.gdx.utils.JsonReader;
-import com.badlogic.gdx.utils.JsonValue;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
-import com.megacrit.cardcrawl.characters.AbstractPlayer.PlayerClass;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
@@ -19,15 +11,11 @@ import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.SeedHelper;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
-import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.screens.charSelect.CharacterSelectScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
-import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
-import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
-import javassist.expr.Instanceof;
 import stwf.multiplayer.LobbyPlayer;
 import stwf.multiplayer.Actions.CharacterSelectedAction;
 import stwf.multiplayer.Actions.MultiplayerAction;
@@ -35,43 +23,24 @@ import stwf.multiplayer.Actions.ReadyStatusUpdatedAction;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
-import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
-import stwf.screens.BaseScreenInterface;
 import stwf.screens.components.BaseButtonComponent;
 import stwf.screens.components.ButtonListenerInterface;
-import stwf.screens.components.CharacterSelectComponent;
 import stwf.screens.components.LabelComponent;
-import stwf.screens.components.PlayerListComponent;
-import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
 
-public class HostGameScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceOnLobbyCreatedCallback, MultiplayerServiceLobbyCallback
+public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnLobbyCreatedCallback
 {
-    public MenuCancelButton returnButton;
-    public GridSelectConfirmButton embarkButton;
-    public PlayerListComponent playerList;
-    public CharacterSelectComponent characterSelect;
-    public LabelComponent titleLabel;
-
-    private Color bgCharColor = new Color(1.0F, 1.0F, 1.0F, 1.0F);
-
-    private Texture selectedCharacterPortraitImage;
-    private LobbyPlayer localPlayer;
-
-    private MultiplayerServiceInterface multiplayerService;
-    private MultiplayerId lobbyId;
+    private GridSelectConfirmButton embarkButton;
+    private LabelComponent titleLabel;
 
     public HostGameScreen(MultiplayerServiceInterface multiplayerService)
     {
-        returnButton = new MenuCancelButton();
+        super(multiplayerService);
+
         embarkButton = new GridSelectConfirmButton(CharacterSelectScreen.TEXT[1]);
-        playerList = new PlayerListComponent();
-        characterSelect = new CharacterSelectComponent();
+
         titleLabel = new LabelComponent(CardCrawlGame.languagePack.getUIString("Lobby").TEXT[13]);
-
-        characterSelect.listener = this;
-
         titleLabel.font = FontHelper.SCP_cardTitleFont_small;
         titleLabel.color = Settings.GOLD_COLOR;
         
@@ -82,58 +51,33 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     }
 
     @Override
-    public void open()
+    public void open(HashMap<String, Object> data)
     {
+        super.open(data);
+
         CardCrawlGame.mainMenuScreen.darken();
         CardCrawlGame.mainMenuScreen.screen = CurScreenPatch.HOST_GAME;
 
-        returnButton.show(PatchNotesScreen.TEXT[0]);
         embarkButton.show();
         embarkButton.isDisabled = true;
 
-        playerList.move(Settings.WIDTH * 0.22f, Settings.HEIGHT * 0.82F);
-        characterSelect.move(Settings.WIDTH * 0.5f, Settings.HEIGHT * 0.31F);
         titleLabel.move(Settings.WIDTH / 2.0F, Settings.HEIGHT - 70.0F * Settings.scale);
-
-        characterSelect.enable();
-        characterSelect.deselect();
-
-        playerList.setReadyButtonDisabled(true);
-        playerList.setReady(false);
-        playerList.clear();
-        playerList.add(localPlayer);
 
         setPlayerListReadyButtonListener();
 
         localPlayer.isReady = false;
 
-        multiplayerService.addLobbyCallback(this);
         multiplayerService.createLobby(MultiplayerLobbyType.PUBLIC, 2, this);
     }
 
     @Override
     public void close()
     {
+        super.close();
+
         CardCrawlGame.mainMenuScreen.screen = MainMenuScreen.CurScreen.MAIN_MENU;
         CardCrawlGame.mainMenuScreen.lighten();
-        
-        returnButton.hide();
         embarkButton.hide();
-        playerList.clear();
-
-        dispose();
-
-        multiplayerService.removeLobbyCallback(this);
-        multiplayerService.leaveLobby(lobbyId);
-    }
-
-    private void dispose()
-    {
-        if (selectedCharacterPortraitImage != null)
-        {
-            selectedCharacterPortraitImage.dispose();
-            selectedCharacterPortraitImage = null;
-        }
     }
 
     @Override
@@ -141,25 +85,12 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     {
         if (result == MultiplayerServiceResult.OK)
         {
-            lobbyId = id;
+            lobby = multiplayerService.getLobby(id);
 
             multiplayerService.setLobbyData(id, "hostName", localPlayer.player.profile.username);
+
+            addPlayersFromLobby();
         }
-    }
-
-    @Override
-    public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId)
-    {
-        playerList.add(new LobbyPlayer(multiplayerService.getPlayer(playerId)));
-    }
-
-    @Override
-    public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId)
-    {
-        LobbyPlayer player = new LobbyPlayer();
-        player.player.profile.id = playerId;
-
-        playerList.remove(player);
     }
 
     private void setPlayerListReadyButtonListener()
@@ -173,9 +104,7 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
                 characterSelect.setDisabled(localPlayer.isReady);
 
-                //embarkButton.isDisabled = !localPlayer.isReady;
-
-                multiplayerService.sendPlayerAction(lobbyId, new ReadyStatusUpdatedAction(localPlayer.isReady));
+                multiplayerService.sendPlayerAction(lobby.id, new ReadyStatusUpdatedAction(localPlayer.isReady));
             }
         });
     }
@@ -199,6 +128,8 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
         else if (action instanceof ReadyStatusUpdatedAction)
         {
             player.isReady = ((ReadyStatusUpdatedAction)action).value;
+
+            embarkButton.isDisabled = !playerList.areAllPlayersReady();
         }
     }
 
@@ -212,28 +143,23 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
         playerList.setReadyButtonDisabled(false);
 
-        multiplayerService.sendPlayerAction(lobbyId, new CharacterSelectedAction(character.chosenClass));
+        multiplayerService.sendPlayerAction(lobby.id, new CharacterSelectedAction(character.chosenClass));
     }
 
     @Override
     public void update()
     {
+        super.update();
+
         if (CardCrawlGame.mainMenuScreen.fadedOut)
         {
             close();
             return;
         }
 
-        returnButton.update();
         embarkButton.update();
 
-        if (returnButton.hb.clicked || InputHelper.pressedEscape)
-        {
-            returnButton.hb.clicked = false;
-            InputHelper.pressedEscape = false;
-            close();
-        }
-        else if (embarkButton.hb.clicked || CInputActionSet.proceed.isJustPressed())
+        if (embarkButton.hb.clicked || CInputActionSet.proceed.isJustPressed())
         {
             embarkButton.hb.clicked = false;
 
@@ -252,9 +178,6 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
 
             CardCrawlGame.mainMenuScreen.screen = MainMenuScreen.CurScreen.MAIN_MENU;
         }
-
-        playerList.update();
-        characterSelect.update();
     }
 
     private void setRandomSeed()
@@ -269,32 +192,9 @@ public class HostGameScreen implements BaseScreenInterface, CharacterSelectCompo
     @Override
     public void render(SpriteBatch spriteBatch)
     {
-        spriteBatch.setColor(this.bgCharColor);
+        super.render(spriteBatch);
 
-        if (selectedCharacterPortraitImage != null)
-        {
-            if (Settings.isSixteenByTen)
-            {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 1920, 1200, false, false);
-            }
-            else if (Settings.isFourByThree)
-            {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.yScale, Settings.yScale, 0.0F, 0, 0, 1920, 1200, false, false);
-            }
-            else if (Settings.isLetterbox)
-            {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.xScale, Settings.xScale, 0.0F, 0, 0, 1920, 1200, false, false);
-            }
-            else
-            {
-                spriteBatch.draw(selectedCharacterPortraitImage, Settings.WIDTH / 2.0F - 960.0F, Settings.HEIGHT / 2.0F - 600.0F, 960.0F, 600.0F, 1920.0F, 1200.0F, Settings.scale, Settings.scale, 0.0F, 0, 0, 1920, 1200, false, false);
-            } 
-        }
-
-        returnButton.render(spriteBatch);
         embarkButton.render(spriteBatch);
-        playerList.render(spriteBatch);
-        characterSelect.render(spriteBatch);
         titleLabel.render(spriteBatch);
     }
 }

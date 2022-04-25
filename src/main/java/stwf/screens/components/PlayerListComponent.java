@@ -74,12 +74,8 @@ public class PlayerListComponent extends BaseComponent
 
     public LobbyPlayer get(LobbyPlayer player)
     {
-        System.out.println("Looking for player with ID " + player.player.profile.id);
-
         for (PlayerListItemComponent item : playerListItems)
         {
-            System.out.println("    Current player ID " + item.player.player.profile.id);
-
             if (item.player.player.profile.id.equals(player.player.profile.id))
             {
                 return item.player;
@@ -132,6 +128,19 @@ public class PlayerListComponent extends BaseComponent
     public void setReady(boolean isReady)
     {
         button.label = isReady ? getLobbyUIString(UNREADY_TEXT_INDEX) : getLobbyUIString(READY_TEXT_INDEX);
+    }
+
+    public boolean areAllPlayersReady()
+    {
+        for (PlayerListItemComponent item : playerListItems)
+        {
+            if (!item.player.isReady)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override

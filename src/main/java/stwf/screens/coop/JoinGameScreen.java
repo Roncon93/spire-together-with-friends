@@ -1,6 +1,7 @@
 package stwf.screens.coop;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -45,7 +46,7 @@ public class JoinGameScreen implements BaseScreenInterface, LobbyListComponentEv
     }
 
     @Override
-    public void open()
+    public void open(HashMap<String, Object> data)
     {
         CardCrawlGame.mainMenuScreen.darken();
         CardCrawlGame.mainMenuScreen.screen = CurScreenPatch.JOIN_GAME;

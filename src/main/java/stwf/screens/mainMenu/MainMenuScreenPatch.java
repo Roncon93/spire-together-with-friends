@@ -78,13 +78,13 @@ public class MainMenuScreenPatch
         {
             if (lobbyScreen == null)
             {
-                lobbyScreen = new LobbyScreen(multiplayerService, data);
+                lobbyScreen = new LobbyScreen(multiplayerService);
             }
 
             currentScreen = lobbyScreen;
         }
 
-        currentScreen.open();
+        currentScreen.open(data);
     }
 
     /**

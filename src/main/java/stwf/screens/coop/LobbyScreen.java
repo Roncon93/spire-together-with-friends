@@ -42,7 +42,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     protected Texture selectedCharacterPortraitImage;
     protected LobbyPlayer localPlayer;
 
-    public LobbyScreen(MultiplayerServiceInterface multiplayerService, HashMap<String, Object> data)
+    public LobbyScreen(MultiplayerServiceInterface multiplayerService)
     {
         this.multiplayerService = multiplayerService;
 
@@ -50,12 +50,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         playerList = new PlayerListComponent();
         characterSelect = new CharacterSelectComponent();
         characterSelect.listener = this;
-
-        if (data != null && data.containsKey("lobbyId"))
-        {
-            MultiplayerId lobbyId = (MultiplayerId)data.get("lobbyId");
-            lobby = multiplayerService.getLobby(lobbyId);
-        }
 
         playerList.addReadyButtonListener(new ButtonListenerInterface()
         {
@@ -68,27 +62,41 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         });
     }
 
-    @Override
-    public void open()
+    protected void addPlayersFromLobby()
     {
+        if (lobby != null)
+        {
+            for (Player player : lobby.players)
+            {
+                if (player.isLocal)
+                {
+                    localPlayer = new LobbyPlayer(player);
+                    playerList.add(localPlayer);
+                }
+                else
+                {
+                    playerList.add(new LobbyPlayer(player));  
+                }
+            }
+        }
+    }
+
+    @Override
+    public void open(HashMap<String, Object> data)
+    {
+        if (data != null && data.containsKey("lobbyId"))
+        {
+            MultiplayerId lobbyId = (MultiplayerId)data.get("lobbyId");
+            lobby = multiplayerService.getLobby(lobbyId);
+        }
+
         returnButton.show(PatchNotesScreen.TEXT[0]);
 
         playerList.move(Settings.WIDTH * 0.22f, Settings.HEIGHT * 0.82F);
         playerList.setReadyButtonDisabled(true);
         playerList.setReady(false);
 
-        for (Player player : lobby.players)
-        {
-            if (player.isLocal)
-            {
-                localPlayer = new LobbyPlayer(player);
-                playerList.add(localPlayer);
-            }
-            else
-            {
-                playerList.add(new LobbyPlayer(player));  
-            }
-        }
+        addPlayersFromLobby();
 
         characterSelect.move(Settings.WIDTH * 0.5f, Settings.HEIGHT * 0.31F);
         characterSelect.enable();
@@ -107,10 +115,12 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         multiplayerService.removeLobbyCallback(this);
         multiplayerService.leaveLobby(lobby.id);
 
+        lobby = null;
+
         dispose();
     }
 
-    private void dispose()
+    protected void dispose()
     {
         if (selectedCharacterPortraitImage != null)
         {
@@ -177,15 +187,18 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     }
 
     @Override
-    public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId) {
-        // TODO Auto-generated method stub
-        
+    public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId)
+    {
+        playerList.add(new LobbyPlayer(multiplayerService.getPlayer(playerId)));
     }
 
     @Override
-    public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId) {
-        // TODO Auto-generated method stub
-        
+    public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId)
+    {
+        LobbyPlayer player = new LobbyPlayer();
+        player.player.profile.id = playerId;
+
+        playerList.remove(player);
     }
 
     @Override

@@ -112,7 +112,15 @@ public class SteamService implements MultiplayerServiceInterface
             player.isLocal = memberId.equals(localSteamUser.getSteamID());
             player.profile.id = SteamServiceUtils.convertSteamIdToGenericId(memberId);
             player.profile.username = memberUsername;
-            player.profile.avatar = getPlayerAvatar(memberId);
+
+            Gdx.app.postRunnable(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    player.profile.avatar = getPlayerAvatar(memberId);
+                }
+            });
 
             lobby.players.add(player);
         }
