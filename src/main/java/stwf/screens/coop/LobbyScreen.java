@@ -26,6 +26,7 @@ import stwf.screens.components.CharacterSelectComponent;
 import stwf.screens.components.PlayerListComponent;
 import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
 import stwf.screens.mainMenu.MainMenuScreenPatch;
+import stwf.utils.StringUtils;
 
 public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceLobbyCallback
 {
@@ -55,7 +56,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             {
                 localPlayer.isReady = !localPlayer.isReady;
                 characterSelect.setDisabled(localPlayer.isReady);
-                // multiplayerService.sendPlayerAction(lobby.id, new ReadyStatusUpdatedAction(localPlayer.isReady));
                 multiplayerService.sendPlayerData(lobby.id, "lobby.ready", Boolean.toString(localPlayer.isReady));
             }
         });
@@ -67,14 +67,29 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         {
             for (Player player : lobby.players)
             {
+                LobbyPlayer lobbyPlayer = new LobbyPlayer(player);
+                
+                String playerCharacter = multiplayerService.getPlayerData(lobby.id, player.profile.id, "lobby.character");
+                String playerReadyStatus = multiplayerService.getPlayerData(lobby.id, player.profile.id, "lobby.ready");
+
+                if (!StringUtils.isNullOrEmpty(playerCharacter))
+                {
+                    lobbyPlayer.player.character = parseCharacter(playerCharacter);
+                }
+
+                if (!StringUtils.isNullOrEmpty(playerReadyStatus))
+                {
+                    lobbyPlayer.isReady = Boolean.parseBoolean(playerReadyStatus);
+                }
+
                 if (player.isLocal)
                 {
-                    localPlayer = new LobbyPlayer(player);
+                    localPlayer = lobbyPlayer;
                     playerList.add(localPlayer);
                 }
                 else
                 {
-                    playerList.add(new LobbyPlayer(player));  
+                    playerList.add(lobbyPlayer);  
                 }
             }
         }
@@ -182,7 +197,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
         playerList.setReadyButtonDisabled(false);
 
-        // multiplayerService.sendPlayerAction(lobby.id, new CharacterSelectedAction(character.chosenClass));
         multiplayerService.sendPlayerData(lobby.id, "lobby.character", character.chosenClass.toString());
     }
 
@@ -209,12 +223,17 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         switch (key)
         {
             case "lobby.character":
-                lobbyPlayer.player.character = CardCrawlGame.characterManager.getCharacter(AbstractPlayer.PlayerClass.valueOf(value));
+                lobbyPlayer.player.character = parseCharacter(value);
                 break;
 
             case "lobby.ready":
                 lobbyPlayer.isReady = Boolean.parseBoolean(value);
                 break;
         }
+    }
+
+    protected AbstractPlayer parseCharacter(String playerClass)
+    {
+        return CardCrawlGame.characterManager.getCharacter(PlayerClass.valueOf(playerClass));
     }
 }

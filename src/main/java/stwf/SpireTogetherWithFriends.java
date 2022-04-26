@@ -2,8 +2,8 @@ package stwf;
 
 import basemod.*;
 import basemod.interfaces.*;
-import stwf.util.IDCheckDontTouchPls;
-import stwf.util.TextureLoader;
+import stwf.utils.IDCheckDontTouchPls;
+import stwf.utils.TextureLoader;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;

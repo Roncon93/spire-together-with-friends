@@ -1,4 +1,4 @@
-package stwf.util;
+package stwf.utils;
 
 import com.codedisaster.steamworks.SteamFriends;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;

@@ -1,4 +1,4 @@
-package stwf.util;
+package stwf.utils;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;

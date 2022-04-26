@@ -31,5 +31,7 @@ public interface MultiplayerServiceInterface
 
     void sendPlayerData(MultiplayerId lobbyId, String key, String value);
 
+    String getPlayerData(MultiplayerId lobbyId, MultiplayerId playerId, String key);
+
     MultiplayerLobby getLobby(MultiplayerId id);
 }

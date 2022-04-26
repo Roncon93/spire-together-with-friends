@@ -1,4 +1,4 @@
-package stwf.util;
+package stwf.utils;
 
 public class IDCheckDontTouchPls {
     public String DEFAULTID;

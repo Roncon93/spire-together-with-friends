@@ -2,7 +2,6 @@ package stwf.multiplayer.services.steam;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -145,6 +144,11 @@ public class SteamService implements MultiplayerServiceInterface
 
         matchmaking.setLobbyMemberData(lobbySteamId, "metadata", new Json().toJson(metadata));
         matchmaking.setLobbyMemberData(lobbySteamId, key, value);
+    }
+
+    public String getPlayerData(MultiplayerId lobbyId, MultiplayerId playerId, String key)
+    {
+        return matchmaking.getLobbyMemberData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), SteamServiceUtils.convertGenericIdToSteamId(playerId), key);
     }
 
     public Player getPlayer(MultiplayerId playerId)
