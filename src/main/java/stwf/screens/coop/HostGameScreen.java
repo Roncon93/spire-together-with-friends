@@ -84,6 +84,32 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
     }
 
     @Override
+    public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId)
+    {
+        super.onPlayerJoined(lobbyId, playerId);
+        updateEmbarkButtonDisabledStatus();
+    }
+
+    @Override
+    public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId)
+    {
+        super.onPlayerLeft(lobbyId, playerId);
+        updateEmbarkButtonDisabledStatus();
+    }
+
+    @Override
+    protected void onPlayerReadyStatusUpdated(LobbyPlayer lobbyPlayer, boolean isReady)
+    {
+        super.onPlayerReadyStatusUpdated(lobbyPlayer, isReady);
+        updateEmbarkButtonDisabledStatus();
+    }
+
+    private void updateEmbarkButtonDisabledStatus()
+    {
+        embarkButton.isDisabled = !playerList.areAllPlayersReady();
+    }
+
+    @Override
     public void update()
     {
         super.update();

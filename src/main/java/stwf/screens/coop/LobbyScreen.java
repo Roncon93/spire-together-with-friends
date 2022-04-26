@@ -223,13 +223,23 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         switch (key)
         {
             case "lobby.character":
-                lobbyPlayer.player.character = parseCharacter(value);
+                onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
                 break;
 
             case "lobby.ready":
-                lobbyPlayer.isReady = Boolean.parseBoolean(value);
+                onPlayerReadyStatusUpdated(lobbyPlayer, Boolean.parseBoolean(value));
                 break;
         }
+    }
+
+    protected void onPlayerSelectedCharacterUpdated(LobbyPlayer lobbyPlayer, AbstractPlayer character)
+    {
+        lobbyPlayer.player.character = character;
+    }
+
+    protected void onPlayerReadyStatusUpdated(LobbyPlayer lobbyPlayer, boolean isReady)
+    {
+        lobbyPlayer.isReady = isReady;
     }
 
     protected AbstractPlayer parseCharacter(String playerClass)
