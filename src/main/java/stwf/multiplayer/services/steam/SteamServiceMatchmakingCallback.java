@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
+import com.badlogic.gdx.utils.Json;
 import com.codedisaster.steamworks.SteamID;
 import com.codedisaster.steamworks.SteamMatchmaking;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatEntryType;
@@ -12,7 +13,6 @@ import com.codedisaster.steamworks.SteamMatchmaking.ChatMemberStateChange;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
 
 import stwf.multiplayer.MultiplayerLobby;
-import stwf.multiplayer.Actions.MultiplayerAction;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbiesRequestedCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
@@ -95,13 +95,15 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     {
         if (!lobbyId.equals(playerId))
         {
-            String payload = matchmakingService.getLobbyMemberData(lobbyId, playerId, "action");
+            MessageMetadata metadata = new Json().fromJson(MessageMetadata.class, matchmakingService.getLobbyMemberData(lobbyId, playerId, "metadata"));            
+            String payload = matchmakingService.getLobbyMemberData(lobbyId, playerId, metadata.key);
+
             MultiplayerId genericLobbyId = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
             MultiplayerId genericPlayerId = SteamServiceUtils.convertSteamIdToGenericId(playerId);
 
             for (MultiplayerServiceLobbyCallback callback : lobbyCallbacks)
             {
-                callback.onPlayerActionReceived(genericLobbyId, genericPlayerId, MultiplayerAction.fromJson(payload));
+                callback.onPlayerDataReceived(genericLobbyId, genericPlayerId, metadata.key, payload);
             }
         }
     }

@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.characters.AbstractPlayer.PlayerClass;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
@@ -13,12 +14,8 @@ import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
-import stwf.multiplayer.LobbyPlayer;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.Player;
-import stwf.multiplayer.Actions.CharacterSelectedAction;
-import stwf.multiplayer.Actions.MultiplayerAction;
-import stwf.multiplayer.Actions.ReadyStatusUpdatedAction;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
@@ -57,7 +54,9 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             public void onClick(BaseButtonComponent button)
             {
                 localPlayer.isReady = !localPlayer.isReady;
-                multiplayerService.sendPlayerAction(lobby.id, new ReadyStatusUpdatedAction(localPlayer.isReady));
+                characterSelect.setDisabled(localPlayer.isReady);
+                // multiplayerService.sendPlayerAction(lobby.id, new ReadyStatusUpdatedAction(localPlayer.isReady));
+                multiplayerService.sendPlayerData(lobby.id, "lobby.ready", Boolean.toString(localPlayer.isReady));
             }
         });
     }
@@ -183,7 +182,8 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
         playerList.setReadyButtonDisabled(false);
 
-        multiplayerService.sendPlayerAction(lobby.id, new CharacterSelectedAction(character.chosenClass));
+        // multiplayerService.sendPlayerAction(lobby.id, new CharacterSelectedAction(character.chosenClass));
+        multiplayerService.sendPlayerData(lobby.id, "lobby.character", character.chosenClass.toString());
     }
 
     @Override
@@ -202,24 +202,19 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     }
 
     @Override
-    public void onPlayerActionReceived(MultiplayerId lobbyId, MultiplayerId playerId, MultiplayerAction action)
+    public void onPlayerDataReceived(MultiplayerId lobbyId, MultiplayerId playerId, String key, String value)
     {
-        LobbyPlayer player = new LobbyPlayer();
-        player.player.profile.id = playerId;
-        player = playerList.get(player);
+        LobbyPlayer lobbyPlayer = playerList.get(playerId);
 
-        if (player == null)
+        switch (key)
         {
-            return;
-        }
+            case "lobby.character":
+                lobbyPlayer.player.character = CardCrawlGame.characterManager.getCharacter(AbstractPlayer.PlayerClass.valueOf(value));
+                break;
 
-        if (action instanceof CharacterSelectedAction)
-        {
-            player.player.character = CardCrawlGame.characterManager.getCharacter(((CharacterSelectedAction)action).value);
-        }
-        else if (action instanceof ReadyStatusUpdatedAction)
-        {
-            player.isReady = ((ReadyStatusUpdatedAction)action).value;
+            case "lobby.ready":
+                lobbyPlayer.isReady = Boolean.parseBoolean(value);
+                break;
         }
     }
 }

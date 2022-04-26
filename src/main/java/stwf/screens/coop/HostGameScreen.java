@@ -3,12 +3,10 @@ package stwf.screens.coop;
 import java.util.HashMap;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
-import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.SeedHelper;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
 import com.megacrit.cardcrawl.random.Random;
@@ -16,17 +14,11 @@ import com.megacrit.cardcrawl.screens.charSelect.CharacterSelectScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
-import stwf.multiplayer.LobbyPlayer;
-import stwf.multiplayer.Actions.CharacterSelectedAction;
-import stwf.multiplayer.Actions.MultiplayerAction;
-import stwf.multiplayer.Actions.ReadyStatusUpdatedAction;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
-import stwf.screens.components.BaseButtonComponent;
-import stwf.screens.components.ButtonListenerInterface;
 import stwf.screens.components.LabelComponent;
 
 public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnLobbyCreatedCallback
@@ -63,8 +55,6 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
 
         titleLabel.move(Settings.WIDTH / 2.0F, Settings.HEIGHT - 70.0F * Settings.scale);
 
-        setPlayerListReadyButtonListener();
-
         localPlayer.isReady = false;
 
         multiplayerService.createLobby(MultiplayerLobbyType.PUBLIC, 2, this);
@@ -91,59 +81,6 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
 
             addPlayersFromLobby();
         }
-    }
-
-    private void setPlayerListReadyButtonListener()
-    {
-        playerList.addReadyButtonListener(new ButtonListenerInterface()
-        {
-            @Override
-            public void onClick(BaseButtonComponent button)
-            {
-                localPlayer.isReady = !localPlayer.isReady;
-
-                characterSelect.setDisabled(localPlayer.isReady);
-
-                multiplayerService.sendPlayerAction(lobby.id, new ReadyStatusUpdatedAction(localPlayer.isReady));
-            }
-        });
-    }
-
-    @Override
-    public void onPlayerActionReceived(MultiplayerId lobbyId, MultiplayerId playerId, MultiplayerAction action)
-    {
-        LobbyPlayer player = new LobbyPlayer();
-        player.player.profile.id = playerId;
-        player = playerList.get(player);
-
-        if (player == null)
-        {
-            return;
-        }
-
-        if (action instanceof CharacterSelectedAction)
-        {
-            player.player.character = CardCrawlGame.characterManager.getCharacter(((CharacterSelectedAction)action).value);
-        }
-        else if (action instanceof ReadyStatusUpdatedAction)
-        {
-            player.isReady = ((ReadyStatusUpdatedAction)action).value;
-
-            embarkButton.isDisabled = !playerList.areAllPlayersReady();
-        }
-    }
-
-    @Override
-    public void onCharacterSelected(AbstractPlayer character)
-    {
-        dispose();
-
-        selectedCharacterPortraitImage = ImageMaster.loadImage("images/ui/charSelect/" + character.getPortraitImageName());
-        character.doCharSelectScreenSelectEffect();
-
-        playerList.setReadyButtonDisabled(false);
-
-        multiplayerService.sendPlayerAction(lobby.id, new CharacterSelectedAction(character.chosenClass));
     }
 
     @Override

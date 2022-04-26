@@ -6,8 +6,8 @@ import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 
-import stwf.multiplayer.LobbyPlayer;
 import stwf.multiplayer.PlayerProfile;
+import stwf.screens.coop.LobbyPlayer;
 
 public class PlayerListItemComponent extends BaseComponent
 {

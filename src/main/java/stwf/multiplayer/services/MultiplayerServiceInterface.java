@@ -3,7 +3,6 @@ package stwf.multiplayer.services;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.Player;
 import stwf.multiplayer.PlayerProfile;
-import stwf.multiplayer.Actions.MultiplayerAction;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbiesRequestedCallback;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
@@ -30,7 +29,7 @@ public interface MultiplayerServiceInterface
 
     boolean setLobbyData(MultiplayerId id, String key, String value);
 
-    void sendPlayerAction(MultiplayerId lobbyId, MultiplayerAction action);
+    void sendPlayerData(MultiplayerId lobbyId, String key, String value);
 
     MultiplayerLobby getLobby(MultiplayerId id);
 }

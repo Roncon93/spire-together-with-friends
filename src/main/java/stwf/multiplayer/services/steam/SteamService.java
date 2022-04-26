@@ -2,11 +2,14 @@ package stwf.multiplayer.services.steam;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.Json;
 import com.codedisaster.steamworks.SteamFriends;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
 import com.codedisaster.steamworks.SteamMatchmaking.LobbyComparison;
@@ -22,7 +25,6 @@ import basemod.ReflectionHacks;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.Player;
 import stwf.multiplayer.PlayerProfile;
-import stwf.multiplayer.Actions.MultiplayerAction;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
@@ -133,9 +135,16 @@ public class SteamService implements MultiplayerServiceInterface
         return matchmaking.setLobbyData(SteamServiceUtils.convertGenericIdToSteamId(id), key, value);
     }
 
-    public void sendPlayerAction(MultiplayerId lobbyId, MultiplayerAction action)
+    public void sendPlayerData(MultiplayerId lobbyId, String key, String value)
     {
-        matchmaking.setLobbyMemberData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), "action", action.toString());
+        MessageMetadata metadata = new MessageMetadata();
+        metadata.id = UUID.randomUUID();
+        metadata.key = key;
+
+        SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(lobbyId);
+
+        matchmaking.setLobbyMemberData(lobbySteamId, "metadata", new Json().toJson(metadata));
+        matchmaking.setLobbyMemberData(lobbySteamId, key, value);
     }
 
     public Player getPlayer(MultiplayerId playerId)

@@ -8,7 +8,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 
-import stwf.multiplayer.LobbyPlayer;
+import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
+import stwf.screens.coop.LobbyPlayer;
 
 public class PlayerListComponent extends BaseComponent
 {
@@ -72,11 +73,11 @@ public class PlayerListComponent extends BaseComponent
         move(x, y);
     }
 
-    public LobbyPlayer get(LobbyPlayer player)
+    public LobbyPlayer get(MultiplayerId playerId)
     {
         for (PlayerListItemComponent item : playerListItems)
         {
-            if (item.player.player.profile.id.equals(player.player.profile.id))
+            if (item.player.player.profile.id.equals(playerId))
             {
                 return item.player;
             }

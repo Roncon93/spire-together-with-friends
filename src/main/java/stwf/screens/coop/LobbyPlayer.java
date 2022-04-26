@@ -1,4 +1,6 @@
-package stwf.multiplayer;
+package stwf.screens.coop;
+
+import stwf.multiplayer.Player;
 
 public class LobbyPlayer
 {
