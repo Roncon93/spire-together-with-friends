@@ -54,10 +54,10 @@ public class SteamService implements MultiplayerServiceInterface
         friends = new SteamFriends(new SteamServiceFriendsCallback());
 
         matchmakingCallback.matchmakingService = matchmaking;
+        matchmakingCallback.localPlayerName = getLocalUserName();
         matchmakingCallback.lobbyCallbacks = lobbyCallbacks;
 
         localSteamUser = (SteamUser)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamUser");
-        
     }
 
     public void addLobbyCallback(MultiplayerServiceLobbyCallback callback)

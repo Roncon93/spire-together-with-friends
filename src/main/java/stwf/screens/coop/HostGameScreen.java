@@ -77,8 +77,6 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
         {
             lobby = multiplayerService.getLobby(id);
 
-            multiplayerService.setLobbyData(id, "hostName", localPlayer.player.profile.username);
-
             addPlayersFromLobby();
         }
     }
@@ -126,30 +124,8 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
         {
             embarkButton.hb.clicked = false;
 
-            setRandomSeed();
-
-            CardCrawlGame.chosenCharacter = localPlayer.player.character.chosenClass;
-
-            CardCrawlGame.mainMenuScreen.isFadingOut = true;
-            CardCrawlGame.mainMenuScreen.fadeOutMusic();
-            Settings.isDailyRun = false;
-
-            AbstractDungeon.isAscensionMode = false;
-            AbstractDungeon.ascensionLevel = 0;
-
-            AbstractDungeon.generateSeeds();
-
-            CardCrawlGame.mainMenuScreen.screen = MainMenuScreen.CurScreen.MAIN_MENU;
+            multiplayerService.sendPlayerData(lobby.id, "lobby.embark", Boolean.toString(true));
         }
-    }
-
-    private void setRandomSeed()
-    {
-        long sourceTime = System.nanoTime();
-        Random rng = new Random(Long.valueOf(sourceTime));
-        Settings.seedSourceTimestamp = sourceTime;
-        Settings.seed = Long.valueOf(SeedHelper.generateUnoffensiveSeed(rng));
-        Settings.seedSet = false;
     }
 
     @Override

@@ -26,6 +26,7 @@ import com.codedisaster.steamworks.SteamResult;
 public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
 {
     public SteamMatchmaking matchmakingService;
+    public String localPlayerName;
     public Queue<MultiplayerServiceOnLobbyCreatedCallback> onLobbyCreatedCallbacks;
     public Queue<MultiplayerServiceOnLobbyJoinedCallback> onLobbyJoinedCallbacks;
     public Queue<MultiplayerServiceOnLobbiesRequestedCallback> onLobbiesRequestedCallbacks;
@@ -82,6 +83,7 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     public void onLobbyCreated(SteamResult result, SteamID id)
     {
         matchmakingService.setLobbyData(id, "mod", "stwf");
+        matchmakingService.setLobbyData(id, "lobby.hostname", localPlayerName);
 
         if (!onLobbyCreatedCallbacks.isEmpty())
         {
@@ -151,7 +153,7 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
                 MultiplayerLobby lobby = new MultiplayerLobby();
                 lobby.id = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
                 lobby.hostId = SteamServiceUtils.convertSteamIdToGenericId(ownerId);
-                lobby.hostName = matchmakingService.getLobbyData(lobbyId, "hostName");
+                lobby.hostName = matchmakingService.getLobbyData(lobbyId, "lobby.hostname");
 
                 lobbies.add(lobby);
             }

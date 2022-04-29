@@ -9,8 +9,12 @@ import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.characters.AbstractPlayer.PlayerClass;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import com.megacrit.cardcrawl.helpers.SeedHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.megacrit.cardcrawl.random.Random;
+import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
@@ -23,8 +27,8 @@ import stwf.screens.BaseScreenInterface;
 import stwf.screens.components.BaseButtonComponent;
 import stwf.screens.components.ButtonListenerInterface;
 import stwf.screens.components.CharacterSelectComponent;
-import stwf.screens.components.PlayerListComponent;
 import stwf.screens.components.CharacterSelectComponent.CharacterSelectComponentListener;
+import stwf.screens.components.PlayerListComponent;
 import stwf.screens.mainMenu.MainMenuScreenPatch;
 import stwf.utils.StringUtils;
 
@@ -106,6 +110,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
         returnButton.show(PatchNotesScreen.TEXT[0]);
 
+        playerList.clear();
         playerList.move(Settings.WIDTH * 0.22f, Settings.HEIGHT * 0.82F);
         playerList.setReadyButtonDisabled(true);
         playerList.setReady(false);
@@ -122,16 +127,29 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     @Override
     public void close()
     {
-        MainMenuScreenPatch.setCurrentScreen(CurScreenPatch.JOIN_GAME);
+        close(false);
+    }
+
+    protected void close(boolean embarking)
+    {
         returnButton.hide();
         playerList.clear();
 
         multiplayerService.removeLobbyCallback(this);
-        multiplayerService.leaveLobby(lobby.id);
 
-        lobby = null;
+        if (!embarking)
+        {
+            setPreviousScreen();
+            multiplayerService.leaveLobby(lobby.id);
+            lobby = null;
+        }
 
         dispose();
+    }
+
+    protected void setPreviousScreen()
+    {
+        MainMenuScreenPatch.setCurrentScreen(CurScreenPatch.JOIN_GAME);
     }
 
     protected void dispose()
@@ -229,6 +247,13 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             case "lobby.ready":
                 onPlayerReadyStatusUpdated(lobbyPlayer, Boolean.parseBoolean(value));
                 break;
+
+            case "lobby.embark":
+                if (Boolean.parseBoolean(value))
+                {
+                    onPlayersEmbarking();
+                }
+                break;
         }
     }
 
@@ -240,6 +265,34 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     protected void onPlayerReadyStatusUpdated(LobbyPlayer lobbyPlayer, boolean isReady)
     {
         lobbyPlayer.isReady = isReady;
+    }
+
+    protected void onPlayersEmbarking()
+    {
+        Settings.isDailyRun = false;
+        Settings.isTrial = false;
+
+        setRandomSeed();
+
+        AbstractDungeon.isAscensionMode = false;
+        AbstractDungeon.ascensionLevel = 0;
+        AbstractDungeon.generateSeeds();
+
+        CardCrawlGame.chosenCharacter = localPlayer.player.character.chosenClass;
+        CardCrawlGame.mainMenuScreen.isFadingOut = true;
+        CardCrawlGame.mainMenuScreen.fadeOutMusic();
+        CardCrawlGame.mainMenuScreen.screen = MainMenuScreen.CurScreen.MAIN_MENU;
+
+        close(true);
+    }
+
+    protected void setRandomSeed()
+    {
+        long sourceTime = System.nanoTime();
+        Random rng = new Random(Long.valueOf(sourceTime));
+        Settings.seedSourceTimestamp = sourceTime;
+        Settings.seed = Long.valueOf(SeedHelper.generateUnoffensiveSeed(rng));
+        Settings.seedSet = false;
     }
 
     protected AbstractPlayer parseCharacter(String playerClass)
