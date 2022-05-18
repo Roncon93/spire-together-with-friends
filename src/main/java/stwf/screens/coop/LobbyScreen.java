@@ -19,6 +19,7 @@ import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
+import stwf.characters.AbstractPlayerPatch.AbstractPlayerFields;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
@@ -81,6 +82,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
                 if (!StringUtils.isNullOrEmpty(playerCharacter))
                 {
                     lobbyPlayer.player.character = parseCharacter(playerCharacter);
+                    AbstractPlayerFields.playerData.set(lobbyPlayer.player.character, lobbyPlayer.player);
                 }
 
                 if (!StringUtils.isNullOrEmpty(playerReadyStatus))
@@ -273,6 +275,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
     protected void onPlayerSelectedCharacterUpdated(LobbyPlayer lobbyPlayer, AbstractPlayer character)
     {
+        AbstractPlayerFields.playerData.set(character, lobbyPlayer.player);
         lobbyPlayer.player.character = character;
     }
 

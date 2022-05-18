@@ -1,22 +1,17 @@
 package stwf.characters;
 
-import java.util.ArrayList;
-
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.evacipated.cardcrawl.modthespire.lib.LineFinder;
-import com.evacipated.cardcrawl.modthespire.lib.Matcher;
 import com.evacipated.cardcrawl.modthespire.lib.SpireField;
-import com.evacipated.cardcrawl.modthespire.lib.SpireInsertLocator;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
-import com.megacrit.cardcrawl.stances.AbstractStance;
+import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.helpers.FontHelper;
 
-import javassist.CtBehavior;
 import stwf.multiplayer.MultiplayerManager;
-import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
+import stwf.multiplayer.Player;
 
 public class AbstractPlayerPatch
 {    
@@ -28,13 +23,13 @@ public class AbstractPlayerPatch
     @SpirePatch2(clz = AbstractPlayer.class, method = SpirePatch.CLASS)
     public static class AbstractPlayerFields
     {
-        public static SpireField<MultiplayerId> playerId = new SpireField<>(() -> null);
+        public static SpireField<Player> playerData = new SpireField<>(() -> null);
     }
 
     @SpirePatch2(clz = AbstractPlayer.class, method = "render")
     public static class RenderPatch
     {
-        @SpireInsertPatch(locator = Locator.class)
+        @SpireInsertPatch
         public static SpireReturn<Void> Prefix(AbstractPlayer __instance, SpriteBatch ___sb)
         {
             if (MultiplayerManager.inMultiplayerLobby() && !shouldRenderPlayers)
@@ -45,14 +40,19 @@ public class AbstractPlayerPatch
             return SpireReturn.Continue();
         }
 
-        public static class Locator extends SpireInsertLocator
+        @SpireInsertPatch
+        public static SpireReturn<Void> Postfix(AbstractPlayer __instance, SpriteBatch ___sb)
         {
-            @Override
-            public int[] Locate(CtBehavior ctMethodToPatch) throws Exception
+            Player playerData = AbstractPlayerFields.playerData.get(__instance);
+            if (playerData != null)
             {
-                Matcher finalMatcher = new Matcher.MethodCallMatcher(AbstractStance.class, "render");
-                return LineFinder.findAllInOrder(ctMethodToPatch, new ArrayList<Matcher>(), finalMatcher);
+                float x = __instance.hb.cX;
+                float y = __instance.hb.y + __instance.hb.height;
+                
+                FontHelper.renderFontCentered(___sb, FontHelper.tipHeaderFont, playerData.profile.username, x, y, Settings.CREAM_COLOR);
             }
+
+            return SpireReturn.Continue();
         }
     }
 }
