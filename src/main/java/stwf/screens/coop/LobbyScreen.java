@@ -2,6 +2,7 @@ package stwf.screens.coop;
 
 import java.util.HashMap;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -19,6 +20,7 @@ import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
 import stwf.multiplayer.MultiplayerLobby;
+import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
@@ -106,6 +108,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         {
             MultiplayerId lobbyId = (MultiplayerId)data.get("lobbyId");
             lobby = multiplayerService.getLobby(lobbyId);
+            MultiplayerManager.setLobby(lobby);
         }
 
         returnButton.show(PatchNotesScreen.TEXT[0]);
@@ -142,6 +145,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             setPreviousScreen();
             multiplayerService.leaveLobby(lobby.id);
             lobby = null;
+            MultiplayerManager.setLobby(lobby);
         }
 
         dispose();
@@ -221,7 +225,9 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     @Override
     public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId)
     {
-        playerList.add(new LobbyPlayer(multiplayerService.getPlayer(playerId)));
+        Player player = multiplayerService.getPlayer(playerId);
+        playerList.add(new LobbyPlayer(player));
+        lobby.players.add(player);
     }
 
     @Override
@@ -231,6 +237,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         player.player.profile.id = playerId;
 
         playerList.remove(player);
+        lobby.players.removeIf((p) -> p.profile.id.equals(playerId));
     }
 
     @Override
@@ -241,7 +248,14 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         switch (key)
         {
             case "lobby.character":
-                onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
+                Gdx.app.postRunnable(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
+                    }   
+                });
                 break;
 
             case "lobby.ready":
@@ -297,6 +311,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
     protected AbstractPlayer parseCharacter(String playerClass)
     {
-        return CardCrawlGame.characterManager.getCharacter(PlayerClass.valueOf(playerClass));
+        return CardCrawlGame.characterManager.getCharacter(PlayerClass.valueOf(playerClass)).newInstance();
     }
 }

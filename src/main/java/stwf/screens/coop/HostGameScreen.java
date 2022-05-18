@@ -5,15 +5,13 @@ import java.util.HashMap;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
-import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
-import com.megacrit.cardcrawl.helpers.SeedHelper;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
-import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.screens.charSelect.CharacterSelectScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
 
+import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
@@ -76,6 +74,7 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
         if (result == MultiplayerServiceResult.OK)
         {
             lobby = multiplayerService.getLobby(id);
+            MultiplayerManager.setLobby(lobby);
 
             addPlayersFromLobby();
         }
