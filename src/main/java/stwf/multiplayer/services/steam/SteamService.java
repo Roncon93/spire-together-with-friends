@@ -1,7 +1,6 @@
 package stwf.multiplayer.services.steam;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,11 +10,11 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Json;
 import com.codedisaster.steamworks.SteamFriends;
+import com.codedisaster.steamworks.SteamID;
+import com.codedisaster.steamworks.SteamMatchmaking;
 import com.codedisaster.steamworks.SteamMatchmaking.ChatRoomEnterResponse;
 import com.codedisaster.steamworks.SteamMatchmaking.LobbyComparison;
 import com.codedisaster.steamworks.SteamMatchmaking.LobbyType;
-import com.codedisaster.steamworks.SteamID;
-import com.codedisaster.steamworks.SteamMatchmaking;
 import com.codedisaster.steamworks.SteamResult;
 import com.codedisaster.steamworks.SteamUser;
 import com.codedisaster.steamworks.SteamUtils;
@@ -159,8 +158,6 @@ public class SteamService implements MultiplayerServiceInterface
     @Override
     public void sendHostPlayerData(MultiplayerId lobbyId, String key, String value)
     {
-        String hostname = matchmaking.getLobbyData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), "lobby.hostname");
-        
         sendLobbyData(lobbyId, key, value);
     }
 
