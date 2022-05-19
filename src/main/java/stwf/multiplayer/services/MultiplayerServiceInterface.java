@@ -27,9 +27,11 @@ public interface MultiplayerServiceInterface
 
     void getLobbies(MultiplayerServiceOnLobbiesRequestedCallback callback);
 
-    boolean setLobbyData(MultiplayerId id, String key, String value);
+    boolean sendLobbyData(MultiplayerId id, String key, String value);
 
     void sendPlayerData(MultiplayerId lobbyId, String key, String value);
+
+    void sendHostPlayerData(MultiplayerId lobbyId, String key, String value);
 
     String getPlayerData(MultiplayerId lobbyId, MultiplayerId playerId, String key);
 

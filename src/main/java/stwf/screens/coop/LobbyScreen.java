@@ -162,8 +162,15 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     {
         if (selectedCharacterPortraitImage != null)
         {
-            selectedCharacterPortraitImage.dispose();
-            selectedCharacterPortraitImage = null;
+            Gdx.app.postRunnable(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    selectedCharacterPortraitImage.dispose();
+                    selectedCharacterPortraitImage = null;
+                }
+            });
         }
     }
 
@@ -273,6 +280,9 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         }
     }
 
+    @Override
+    public void onLobbyDataReceived(MultiplayerId lobbyId, String key, String value) {}
+
     protected void onPlayerSelectedCharacterUpdated(LobbyPlayer lobbyPlayer, AbstractPlayer character)
     {
         AbstractPlayerFields.playerData.set(character, lobbyPlayer.player);
@@ -286,6 +296,8 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
     protected void onPlayersEmbarking()
     {
+        MultiplayerManager.setMultiplayerService(multiplayerService);
+
         Settings.isDailyRun = false;
         Settings.isTrial = false;
 

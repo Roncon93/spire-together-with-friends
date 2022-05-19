@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -47,7 +48,7 @@ public class SteamService implements MultiplayerServiceInterface
     public SteamService()
     {
         matchmakingCallback = new SteamServiceMatchmakingCallback();
-        lobbyCallbacks = new ArrayList<>();
+        lobbyCallbacks = new CopyOnWriteArrayList<>();
 
         matchmaking = new SteamMatchmaking(matchmakingCallback);
         utils = new SteamUtils(new SteamServiceUtilsCallback());
@@ -129,11 +130,20 @@ public class SteamService implements MultiplayerServiceInterface
         return lobby;
     }
 
-    public boolean setLobbyData(MultiplayerId id, String key, String value)
+    @Override
+    public boolean sendLobbyData(MultiplayerId lobbyId, String key, String value)
     {
-        return matchmaking.setLobbyData(SteamServiceUtils.convertGenericIdToSteamId(id), key, value);
+        MessageMetadata metadata = new MessageMetadata();
+        metadata.id = UUID.randomUUID();
+        metadata.key = key;
+
+        SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(lobbyId);
+
+        matchmaking.setLobbyData(lobbySteamId, "metadata", new Json().toJson(metadata));
+        return matchmaking.setLobbyData(lobbySteamId, key, value);
     }
 
+    @Override
     public void sendPlayerData(MultiplayerId lobbyId, String key, String value)
     {
         MessageMetadata metadata = new MessageMetadata();
@@ -144,6 +154,14 @@ public class SteamService implements MultiplayerServiceInterface
 
         matchmaking.setLobbyMemberData(lobbySteamId, "metadata", new Json().toJson(metadata));
         matchmaking.setLobbyMemberData(lobbySteamId, key, value);
+    }
+
+    @Override
+    public void sendHostPlayerData(MultiplayerId lobbyId, String key, String value)
+    {
+        String hostname = matchmaking.getLobbyData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), "lobby.hostname");
+        
+        sendLobbyData(lobbyId, key, value);
     }
 
     public String getPlayerData(MultiplayerId lobbyId, MultiplayerId playerId, String key)

@@ -108,6 +108,22 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
                 callback.onPlayerDataReceived(genericLobbyId, genericPlayerId, metadata.key, payload);
             }
         }
+        else
+        {
+            MessageMetadata metadata = new Json().fromJson(MessageMetadata.class, matchmakingService.getLobbyData(lobbyId, "metadata"));
+
+            if (metadata != null)
+            {
+                String payload = matchmakingService.getLobbyData(lobbyId, metadata.key);
+
+                MultiplayerId genericLobbyId = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
+
+                for (MultiplayerServiceLobbyCallback callback : lobbyCallbacks)
+                {
+                    callback.onLobbyDataReceived(genericLobbyId, metadata.key, payload);
+                }
+            }
+        }
     }
 
     @Override
