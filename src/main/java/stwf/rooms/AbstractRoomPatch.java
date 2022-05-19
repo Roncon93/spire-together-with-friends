@@ -65,31 +65,4 @@ public class AbstractRoomPatch
             }
         }
     }
-
-    @SpirePatch2(clz = AbstractRoom.class, method = "update")
-    public static class UpdatePatch
-    {
-        @SpireInsertPatch(locator = Locator.class)
-        public static void Postfix(AbstractRoom __instance)
-        {
-            // Initialize();
-
-            // if (!(AbstractDungeon.getCurrRoom() instanceof com.megacrit.cardcrawl.rooms.RestRoom))
-            // {
-            //     player.update();
-            //     player.updateAnimations();
-            //     System.out.println(AbstractPlayerFields.playerId.get(player));
-            // }
-        }
-
-        public static class Locator extends SpireInsertLocator
-        {
-            @Override
-            public int[] Locate(CtBehavior ctMethodToPatch) throws Exception
-            {
-                Matcher finalMatcher = new Matcher.MethodCallMatcher(AbstractPlayer.class, "update");
-                return LineFinder.findAllInOrder(ctMethodToPatch, new ArrayList<Matcher>(), finalMatcher);
-            }
-        }
-    }
 }

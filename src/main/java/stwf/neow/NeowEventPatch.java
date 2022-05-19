@@ -1,24 +1,40 @@
 package stwf.neow;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.utils.Json;
+import com.evacipated.cardcrawl.modthespire.lib.LineFinder;
+import com.evacipated.cardcrawl.modthespire.lib.Matcher;
+import com.evacipated.cardcrawl.modthespire.lib.SpireInsertLocator;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.events.AbstractEvent;
 import com.megacrit.cardcrawl.neow.NeowEvent;
+import com.megacrit.cardcrawl.neow.NeowReward;
 
+import javassist.CtBehavior;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
+import stwf.neow.NeowRewardPatch.NeowRewardFieldPatch;
 
 public class NeowEventPatch
 {
+    public static ArrayList<Integer> blessingRewardIndices;
+    public static int drawbackIndex;
+
     private static NeowEvent instance;
     private static boolean enableTalk = false;
     private static boolean enableMiniBlessing = false;
+    private static boolean enableBlessing = false;
+
+    private static final Json JSON = new Json();
 
     private static MultiplayerServiceLobbyCallback callback = new MultiplayerServiceLobbyCallback()
     {
@@ -52,6 +68,16 @@ public class NeowEventPatch
                 MiniBlessingMethodPatch.invoke();
                 enableMiniBlessing = false;
             }
+            else if (key.equals("event.neow.blessing"))
+            {
+                BlessingMethodPatch.Payload payload = JSON.fromJson(BlessingMethodPatch.Payload.class, value);
+                blessingRewardIndices = payload.rewardIndices;
+                drawbackIndex = payload.drawbackIndex;
+                
+                enableBlessing = true;
+                BlessingMethodPatch.invoke();
+                enableBlessing = false;
+            }
         }
     };
 
@@ -62,6 +88,7 @@ public class NeowEventPatch
         public static void Postfix(NeowEvent __instance, boolean ___isDone)
         {
             instance = __instance;
+            blessingRewardIndices = null;
             MultiplayerManager.addLobbyCallback(callback);
         }
     }
@@ -105,6 +132,10 @@ public class NeowEventPatch
                     method.invoke(instance, arguments);
                 }                
             }
+            catch (InvocationTargetException e)
+            {
+                e.getTargetException().printStackTrace();
+            }
             catch (Exception e)
             {
                 e.printStackTrace();        
@@ -138,7 +169,53 @@ public class NeowEventPatch
 
         private static void invoke()
         {
-            PrivateMethodPatch.invoke(NeowEvent.class, "miniBlessing");
+            PrivateMethodPatch.invoke(NeowEvent.class, "blessing");
+        }
+    }
+
+    @SpirePatch2(clz = NeowEvent.class, method = "blessing")
+    public static class BlessingMethodPatch
+    {
+        @SpireInsertPatch(locator = Locator.class)
+        public static SpireReturn<Void> Insert(NeowEvent __instance)
+        {
+            if (!MultiplayerManager.inMultiplayerLobby() || enableBlessing)
+            {
+                return SpireReturn.Continue();
+            }
+
+            Payload payload = new Payload();
+            for (int i = 0; i < 4; i++)
+            {
+                NeowReward reward = new NeowReward(i);
+                int rewardIndex = NeowRewardFieldPatch.rewardIndex.get(reward);
+                payload.rewardIndices.add(rewardIndex);
+                payload.drawbackIndex = NeowRewardFieldPatch.drawbackIndex.get(reward);
+            }
+
+            MultiplayerManager.sendLobbyData("event.neow.blessing", JSON.toJson(payload));
+            return SpireReturn.Return();
+        }
+
+        private static void invoke()
+        {
+            PrivateMethodPatch.invoke(NeowEvent.class, "blessing");
+        }
+
+        public static class Locator extends SpireInsertLocator
+        {
+            @Override
+            public int[] Locate(CtBehavior ctMethodToPatch) throws Exception
+            {
+                Matcher finalMatcher = new Matcher.FieldAccessMatcher(AbstractDungeon.class, "bossCount");
+                return LineFinder.findInOrder(ctMethodToPatch, new ArrayList<Matcher>(), finalMatcher);
+            }
+        }
+
+        public static class Payload
+        {
+            public ArrayList<Integer> rewardIndices = new ArrayList<>();
+            public int drawbackIndex = 0;
         }
     }
 
