@@ -6,7 +6,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.FontHelper;
+import com.megacrit.cardcrawl.helpers.SeedHelper;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
+import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.screens.charSelect.CharacterSelectScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.ui.buttons.GridSelectConfirmButton;
@@ -75,6 +77,7 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
         {
             lobby = multiplayerService.getLobby(id);
             MultiplayerManager.setLobby(lobby);
+            MultiplayerManager.setMultiplayerService(multiplayerService);
 
             addPlayersFromLobby();
         }
@@ -106,6 +109,16 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
         embarkButton.isDisabled = !playerList.areAllPlayersReady();
     }
 
+    private EmbarkMessage getGameSettings()
+    {
+        long sourceTime = System.nanoTime();
+        Random rng = new Random(Long.valueOf(sourceTime));
+        long seed = Long.valueOf(SeedHelper.generateUnoffensiveSeed(rng));
+
+        Settings.setFinalActAvailability();
+        return new EmbarkMessage(sourceTime, seed, Settings.isFinalActAvailable);
+    }
+
     @Override
     public void update()
     {
@@ -123,7 +136,9 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
         {
             embarkButton.hb.clicked = false;
 
-            multiplayerService.sendPlayerData(lobby.id, "lobby.embark", Boolean.toString(true));
+            EmbarkMessage seed = getGameSettings();
+
+            multiplayerService.sendPlayerData(lobby.id, "lobby.embark", JSON.toJson(seed));
         }
     }
 

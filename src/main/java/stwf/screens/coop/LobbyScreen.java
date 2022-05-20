@@ -6,20 +6,20 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.Json;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.characters.AbstractPlayer.PlayerClass;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
-import com.megacrit.cardcrawl.helpers.SeedHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
-import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.screens.mainMenu.MainMenuScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.mainMenu.PatchNotesScreen;
 
 import stwf.characters.AbstractPlayerPatch.AbstractPlayerFields;
+import stwf.core.SettingsPatch;
 import stwf.multiplayer.MultiplayerLobby;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
@@ -37,6 +37,7 @@ import stwf.utils.StringUtils;
 
 public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponentListener, MultiplayerServiceLobbyCallback
 {
+    protected static final Json JSON = new Json();
     private static final Color BACKGROUND_COLOR = new Color(1.0F, 1.0F, 1.0F, 1.0F);
 
     protected MenuCancelButton returnButton;
@@ -272,10 +273,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
                 break;
 
             case "lobby.embark":
-                if (Boolean.parseBoolean(value))
-                {
-                    onPlayersEmbarking();
-                }
+                onPlayersEmbarking(JSON.fromJson(EmbarkMessage.class, value));
                 break;
         }
     }
@@ -294,14 +292,15 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         lobbyPlayer.isReady = isReady;
     }
 
-    protected void onPlayersEmbarking()
+    protected void onPlayersEmbarking(EmbarkMessage payload)
     {
         MultiplayerManager.setMultiplayerService(multiplayerService);
+        MultiplayerManager.setInDungeon();
 
         Settings.isDailyRun = false;
         Settings.isTrial = false;
 
-        setRandomSeed();
+        setGameSettings(payload);
 
         AbstractDungeon.isAscensionMode = false;
         AbstractDungeon.ascensionLevel = 0;
@@ -315,17 +314,32 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         close(true);
     }
 
-    protected void setRandomSeed()
+    protected void setGameSettings(EmbarkMessage payload)
     {
-        long sourceTime = System.nanoTime();
-        Random rng = new Random(Long.valueOf(sourceTime));
-        Settings.seedSourceTimestamp = sourceTime;
-        Settings.seed = Long.valueOf(SeedHelper.generateUnoffensiveSeed(rng));
+        Settings.seedSourceTimestamp = payload.sourceTime;
+        Settings.seed = payload.seed;
         Settings.seedSet = false;
+        SettingsPatch.isFinalActAvailable = payload.isFinalActAvailable;
     }
 
     protected AbstractPlayer parseCharacter(String playerClass)
     {
         return CardCrawlGame.characterManager.getCharacter(PlayerClass.valueOf(playerClass)).newInstance();
+    }
+
+    public static class EmbarkMessage
+    {
+        public long sourceTime;
+        public long seed;
+        public boolean isFinalActAvailable;
+
+        public EmbarkMessage() {}
+
+        public EmbarkMessage(long sourceTime, long seed, boolean isFinalActAvailable)
+        {
+            this.sourceTime = sourceTime;
+            this.seed = seed;
+            this.isFinalActAvailable = isFinalActAvailable;
+        }
     }
 }

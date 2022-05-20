@@ -111,7 +111,6 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
         else
         {
             MessageMetadata metadata = new Json().fromJson(MessageMetadata.class, matchmakingService.getLobbyData(lobbyId, "metadata"));
-
             if (metadata != null)
             {
                 String payload = matchmakingService.getLobbyData(lobbyId, metadata.key);
