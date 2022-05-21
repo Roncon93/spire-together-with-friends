@@ -1,5 +1,7 @@
 package stwf.characters;
 
+import java.util.Iterator;
+
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireField;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
@@ -8,6 +10,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 
 import stwf.multiplayer.MultiplayerManager;
@@ -15,7 +18,32 @@ import stwf.multiplayer.Player;
 
 public class AbstractPlayerPatch
 {    
-    public static boolean shouldRenderPlayers = false;
+    private static final float[][] POSITIONS =
+    {
+        { Settings.WIDTH * 0.25F, AbstractDungeon.floorY },
+        { Settings.WIDTH * 0.20f, AbstractDungeon.floorY * 0.7f }
+    };
+
+    public static boolean enableRender = false;
+    public static boolean enableMovePosition = false;
+
+    public static void initializeLocalPlayer()
+    {
+        Iterator<Player> players = MultiplayerManager.getPlayers();
+        while (players.hasNext())
+        {
+            Player player = players.next();
+            if (player.isLocal && AbstractDungeon.player != player.character)
+            {
+                AbstractPlayer temp = player.character;
+                player.character = AbstractDungeon.player;
+                AbstractPlayerFields.playerData.set(player.character, AbstractPlayerFields.playerData.get(temp));
+                temp.dispose();
+
+                player.character.movePosition(0, 0);
+            }
+        }
+    }
 
     /**
      * Adds fields to the MainMenuScreen class.
@@ -32,7 +60,7 @@ public class AbstractPlayerPatch
         @SpireInsertPatch
         public static SpireReturn<Void> Prefix(AbstractPlayer __instance, SpriteBatch ___sb)
         {
-            if (MultiplayerManager.inMultiplayerLobby() && !shouldRenderPlayers)
+            if (MultiplayerManager.inMultiplayerLobby() && !enableRender)
             {
                 return SpireReturn.Return();
             }
@@ -53,6 +81,37 @@ public class AbstractPlayerPatch
             }
 
             return SpireReturn.Continue();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractPlayer.class, method = "movePosition")
+    public static class MovePositionPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix()
+        {
+            System.out.println("move positions called");
+
+            if (enableMovePosition)
+            {
+                return SpireReturn.Continue();
+            }
+
+            enableMovePosition = true;
+
+            Iterator<Player> players = MultiplayerManager.getPlayers();
+            while (players.hasNext())
+            {
+                Player player = players.next();
+                int index = MultiplayerManager.getPlayerIndex(player);
+
+                System.out.println("Player " + player.profile.username + " has index " + index);
+
+                player.character.movePosition(POSITIONS[index][0], POSITIONS[index][1]);
+            }
+
+            enableMovePosition = false;            
+            return SpireReturn.Return();
         }
     }
 }

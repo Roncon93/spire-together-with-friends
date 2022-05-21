@@ -82,6 +82,12 @@ public class MultiplayerManager
         return lobby.players.iterator();
     }
 
+    public static int getPlayerIndex(Player player)
+    {
+        int index = lobby.players.indexOf(player);
+        return index != -1 ? index : 0;
+    }
+
     public static boolean isLocalPlayerHost()
     {
         return true;        

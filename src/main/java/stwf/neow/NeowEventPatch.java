@@ -19,6 +19,7 @@ import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.neow.NeowReward;
 
 import javassist.CtBehavior;
+import stwf.characters.AbstractPlayerPatch;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
@@ -92,6 +93,7 @@ public class NeowEventPatch
 
             if (MultiplayerManager.inMultiplayerLobby())
             {
+                AbstractPlayerPatch.initializeLocalPlayer();
                 MultiplayerManager.addLobbyCallback(callback);
             }
         }

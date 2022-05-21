@@ -11,8 +11,6 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
-import com.megacrit.cardcrawl.core.Settings;
-import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 
 import javassist.CtBehavior;
@@ -22,12 +20,6 @@ import stwf.multiplayer.Player;
 
 public class AbstractRoomPatch
 {
-    private static float[][] playerPositions =
-    {
-        { Settings.WIDTH * 0.25F, AbstractDungeon.floorY },
-        { Settings.WIDTH * 0.20f, AbstractDungeon.floorY * 0.7f }
-    };
-
     @SpirePatch2(clz = AbstractRoom.class, method = "render")
     public static class RenderPatch
     {
@@ -36,20 +28,15 @@ public class AbstractRoomPatch
         {
             if (MultiplayerManager.inMultiplayerLobby())
             {
-                AbstractPlayerPatch.shouldRenderPlayers = true;
-                int counter = 0;
+                AbstractPlayerPatch.enableRender = true;
 
                 Iterator<Player> players = MultiplayerManager.getPlayers();
                 while (players.hasNext())
                 {
                     Player player = players.next();
-
-                    player.character.movePosition(playerPositions[counter][0], playerPositions[counter][1]);
                     player.character.render(___sb);
-
-                    counter++;
                 }
-                AbstractPlayerPatch.shouldRenderPlayers = false;
+                AbstractPlayerPatch.enableRender = false;
             }
 
             return SpireReturn.Continue();
