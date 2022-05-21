@@ -90,7 +90,7 @@ public class NeowEventPatch
             instance = __instance;
             blessingRewardIndices = null;
 
-            if (!MultiplayerManager.inMultiplayerLobby())
+            if (MultiplayerManager.inMultiplayerLobby())
             {
                 MultiplayerManager.addLobbyCallback(callback);
             }
@@ -229,7 +229,7 @@ public class NeowEventPatch
         @SpireInsertPatch
         public static void Postfix(AbstractEvent __instance)
         {
-            if (!MultiplayerManager.inMultiplayerLobby())
+            if (MultiplayerManager.inMultiplayerLobby())
             {
                 MultiplayerManager.removeLobbyCallback(callback);
             }

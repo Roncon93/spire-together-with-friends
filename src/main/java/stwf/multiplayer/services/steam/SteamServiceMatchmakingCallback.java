@@ -27,6 +27,7 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
 {
     public SteamMatchmaking matchmakingService;
     public String localPlayerName;
+    public SteamID localPlayerId;
     public Queue<MultiplayerServiceOnLobbyCreatedCallback> onLobbyCreatedCallbacks;
     public Queue<MultiplayerServiceOnLobbyJoinedCallback> onLobbyJoinedCallbacks;
     public Queue<MultiplayerServiceOnLobbiesRequestedCallback> onLobbiesRequestedCallbacks;
@@ -84,6 +85,7 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     {
         matchmakingService.setLobbyData(id, "mod", "stwf");
         matchmakingService.setLobbyData(id, "lobby.hostname", localPlayerName);
+        matchmakingService.setLobbyData(id, "lobby.host.id", localPlayerId.toString());
 
         if (!onLobbyCreatedCallbacks.isEmpty())
         {

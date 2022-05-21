@@ -19,6 +19,7 @@ import com.codedisaster.steamworks.SteamResult;
 import com.codedisaster.steamworks.SteamUser;
 import com.codedisaster.steamworks.SteamUtils;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
+import com.megacrit.cardcrawl.integrations.steam.SteamIntegration;
 
 import basemod.ReflectionHacks;
 import stwf.multiplayer.MultiplayerLobby;
@@ -53,21 +54,28 @@ public class SteamService implements MultiplayerServiceInterface
         utils = new SteamUtils(new SteamServiceUtilsCallback());
         friends = new SteamFriends(new SteamServiceFriendsCallback());
 
+        localSteamUser = (SteamUser)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, SteamIntegration.class, "steamUser");
+
         matchmakingCallback.matchmakingService = matchmaking;
         matchmakingCallback.localPlayerName = getLocalUserName();
+        matchmakingCallback.localPlayerId = localSteamUser.getSteamID();
         matchmakingCallback.lobbyCallbacks = lobbyCallbacks;
-
-        localSteamUser = (SteamUser)ReflectionHacks.getPrivate(CardCrawlGame.publisherIntegration, com.megacrit.cardcrawl.integrations.steam.SteamIntegration.class, "steamUser");
     }
 
     public void addLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
-        lobbyCallbacks.add(callback);
+        if (!lobbyCallbacks.contains(callback))
+        {
+            lobbyCallbacks.add(callback);
+        }
     }
 
     public void removeLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
-        lobbyCallbacks.remove(callback);
+        if (lobbyCallbacks.contains(callback))
+        {
+            lobbyCallbacks.remove(callback);
+        }
     }
 
     public void createLobby(MultiplayerLobbyType type, int maxPlayers, MultiplayerServiceOnLobbyCreatedCallback callback)
@@ -144,6 +152,11 @@ public class SteamService implements MultiplayerServiceInterface
     @Override
     public boolean sendLobbyData(MultiplayerId lobbyId, String key, String value)
     {
+        if (!getLobbyData(lobbyId, "lobby.host.id").equals(localSteamUser.getSteamID().toString()))
+        {
+            return false;
+        }
+
         MessageMetadata metadata = new MessageMetadata();
         metadata.id = UUID.randomUUID();
         metadata.key = key;

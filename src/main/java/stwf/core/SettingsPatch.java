@@ -11,7 +11,7 @@ public class SettingsPatch
     public static boolean isFinalActAvailable = false;
 
     @SpirePatch2(clz = Settings.class, method = "setFinalActAvailability")
-    public static class DisposePatch
+    public static class SetFinalActAvailabilityPatch
     {
         @SpireInsertPatch
         public static void Postfix()
