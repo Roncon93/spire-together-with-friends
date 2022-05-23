@@ -20,6 +20,37 @@ import stwf.multiplayer.Player;
 
 public class AbstractRoomPatch
 {
+    @SpirePatch2(clz = AbstractRoom.class, method = "update")
+    public static class UpdatePatch
+    {
+        @SpireInsertPatch(locator = Locator.class)
+        public static SpireReturn<Void> Postfix(AbstractRoom __instance)
+        {
+            if (MultiplayerManager.inMultiplayerLobby())
+            {
+                Iterator<Player> players = MultiplayerManager.getPlayers();
+                while (players.hasNext())
+                {
+                    Player player = players.next();
+                    player.character.update();
+                    player.character.updateAnimations();
+                }
+            }
+
+            return SpireReturn.Continue();
+        }
+
+        public static class Locator extends SpireInsertLocator
+        {
+            @Override
+            public int[] Locate(CtBehavior ctMethodToPatch) throws Exception
+            {
+                Matcher finalMatcher = new Matcher.MethodCallMatcher(AbstractPlayer.class, "updateAnimations");
+                return LineFinder.findAllInOrder(ctMethodToPatch, new ArrayList<Matcher>(), finalMatcher);
+            }
+        }
+    }
+
     @SpirePatch2(clz = AbstractRoom.class, method = "render")
     public static class RenderPatch
     {

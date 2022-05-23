@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
+import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 
 public class MultiplayerManager
 {
@@ -39,6 +40,14 @@ public class MultiplayerManager
         if (multiplayerService != null)
         {
             multiplayerService.sendLobbyData(lobby.id, key, value);
+        }
+    }
+
+    public static void sendPlayerData(String key, String value)
+    {
+        if (multiplayerService != null)
+        {
+            multiplayerService.sendPlayerData(lobby.id, key, value);
         }
     }
 
@@ -86,6 +95,32 @@ public class MultiplayerManager
     {
         int index = lobby.players.indexOf(player);
         return index != -1 ? index : 0;
+    }
+
+    public static Player getPlayer(MultiplayerId playerId)
+    {
+        for (Player player : lobby.players)
+        {
+            if (player.profile.id.equals(playerId))
+            {
+                return player;
+            }
+        }
+
+        return null;
+    }
+
+    public static Player getLocalPlayer()
+    {
+        for (Player player : lobby.players)
+        {
+            if (player.isLocal)
+            {
+                return player;
+            }
+        }
+
+        return null;
     }
 
     public static boolean isLocalPlayerHost()
