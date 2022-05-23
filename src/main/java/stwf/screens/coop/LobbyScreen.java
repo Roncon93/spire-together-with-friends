@@ -98,7 +98,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
                 }
                 else
                 {
-                    playerList.add(lobbyPlayer);  
+                    playerList.add(lobbyPlayer);
                 }
             }
         }
@@ -107,10 +107,17 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     @Override
     public void open(HashMap<String, Object> data)
     {
+        if (lobby != null)
+        {
+            multiplayerService.leaveLobby(lobby.id);
+            lobby = null;
+        }
+
         if (data != null && data.containsKey("lobbyId"))
         {
             MultiplayerId lobbyId = (MultiplayerId)data.get("lobbyId");
             lobby = multiplayerService.getLobby(lobbyId);
+
             MultiplayerManager.setLobby(lobby);
         }
 

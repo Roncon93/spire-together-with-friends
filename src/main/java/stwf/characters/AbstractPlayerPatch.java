@@ -90,8 +90,6 @@ public class AbstractPlayerPatch
         @SpireInsertPatch
         public static SpireReturn<Void> Prefix()
         {
-            System.out.println("move positions called");
-
             if (enableMovePosition)
             {
                 return SpireReturn.Continue();
@@ -104,8 +102,6 @@ public class AbstractPlayerPatch
             {
                 Player player = players.next();
                 int index = MultiplayerManager.getPlayerIndex(player);
-
-                System.out.println("Player " + player.profile.username + " has index " + index);
 
                 player.character.movePosition(POSITIONS[index][0], POSITIONS[index][1]);
             }
