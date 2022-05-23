@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Json;
 import com.evacipated.cardcrawl.modthespire.lib.LineFinder;
@@ -59,9 +60,16 @@ public class NeowEventPatch
         {
             if (key.equals("event.neow.talked"))
             {
-                enableTalk = true;
-                TalkMethodPatch.invoke(value);
-                enableTalk = false;
+                Gdx.app.postRunnable(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        enableTalk = true;
+                        TalkMethodPatch.invoke(value);
+                        enableTalk = false;
+                    }
+                });
             }
             else if (key.equals("event.neow.mini-blessing"))
             {

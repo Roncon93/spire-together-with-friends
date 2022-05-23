@@ -83,7 +83,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
                 if (!StringUtils.isNullOrEmpty(playerCharacter))
                 {
                     lobbyPlayer.player.character = parseCharacter(playerCharacter);
-                    AbstractPlayerFields.playerData.set(lobbyPlayer.player.character, lobbyPlayer.player);
                 }
 
                 if (!StringUtils.isNullOrEmpty(playerReadyStatus))
@@ -168,17 +167,22 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
     protected void dispose()
     {
+        Gdx.app.postRunnable(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                disposeCharacterImage();
+            }
+        });
+    }
+
+    protected void disposeCharacterImage()
+    {
         if (selectedCharacterPortraitImage != null)
         {
-            Gdx.app.postRunnable(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    selectedCharacterPortraitImage.dispose();
-                    selectedCharacterPortraitImage = null;
-                }
-            });
+            selectedCharacterPortraitImage.dispose();
+            selectedCharacterPortraitImage = null;
         }
     }
 
@@ -229,7 +233,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     @Override
     public void onCharacterSelected(AbstractPlayer character)
     {
-        dispose();
+        disposeCharacterImage();
 
         selectedCharacterPortraitImage = ImageMaster.loadImage("images/ui/charSelect/" + character.getPortraitImageName());
         character.doCharSelectScreenSelectEffect();
@@ -265,14 +269,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         switch (key)
         {
             case "lobby.character":
-                Gdx.app.postRunnable(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
-                    }   
-                });
+                onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
                 break;
 
             case "lobby.ready":
@@ -290,7 +287,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
     protected void onPlayerSelectedCharacterUpdated(LobbyPlayer lobbyPlayer, AbstractPlayer character)
     {
-        AbstractPlayerFields.playerData.set(character, lobbyPlayer.player);
         lobbyPlayer.player.character = character;
     }
 
@@ -308,6 +304,19 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         Settings.isTrial = false;
 
         setGameSettings(payload);
+
+        Gdx.app.postRunnable(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (Player player : lobby.players)
+                {
+                    player.character = CardCrawlGame.characterManager.recreateCharacter(player.character.chosenClass);
+                    AbstractPlayerFields.playerData.set(player.character, player);
+                }
+            }
+        });
 
         AbstractDungeon.isAscensionMode = false;
         AbstractDungeon.ascensionLevel = 0;
@@ -331,7 +340,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
     protected AbstractPlayer parseCharacter(String playerClass)
     {
-        return CardCrawlGame.characterManager.getCharacter(PlayerClass.valueOf(playerClass)).newInstance();
+        return CardCrawlGame.characterManager.getCharacter(PlayerClass.valueOf(playerClass));
     }
 
     public static class EmbarkMessage

@@ -43,9 +43,11 @@ public class AbstractDungeonPatch
             {
                 RoomSelectedMessage message = RoomSelectedMessage.fromJson(value);
                 
-                Gdx.app.postRunnable(new Runnable() {
+                Gdx.app.postRunnable(new Runnable()
+                {
                     @Override
-                    public void run() {
+                    public void run()
+                    {
                         MapRoomNodePatch.shouldContinue = true;
                         MapRoomNode node = AbstractDungeon.map.get(message.y).get(message.x);
                         node.update();
