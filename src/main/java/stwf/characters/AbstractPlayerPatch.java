@@ -9,6 +9,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
@@ -17,11 +18,14 @@ import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
 
 public class AbstractPlayerPatch
-{    
+{
+    private static boolean enablePreBattlePrep = false;
+    private static boolean enableShowHealthBar = false;
+
     private static final float[][] POSITIONS =
     {
-        { Settings.WIDTH * 0.25F, AbstractDungeon.floorY },
-        { Settings.WIDTH * 0.20f, AbstractDungeon.floorY * 0.7f }
+        { Settings.WIDTH * 0.32F, AbstractDungeon.floorY * 1.1f },
+        { Settings.WIDTH * 0.22f, AbstractDungeon.floorY * 0.8f }
     };
 
     public static boolean enableRender = false;
@@ -78,6 +82,58 @@ public class AbstractPlayerPatch
                 float y = __instance.hb.y + __instance.hb.height;
                 
                 FontHelper.renderFontCentered(___sb, FontHelper.tipHeaderFont, playerData.profile.username, x, y, Settings.CREAM_COLOR);
+            }
+
+            return SpireReturn.Continue();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractPlayer.class, method = "preBattlePrep")
+    public static class PreBattlePrepPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix()
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && !enablePreBattlePrep)
+            {
+                enablePreBattlePrep = true;
+
+                Iterator<Player> players = MultiplayerManager.getPlayers();
+                while (players.hasNext())
+                {
+                    Player player = players.next();
+                    player.character.preBattlePrep();
+                }
+
+                enablePreBattlePrep = false;
+
+                return SpireReturn.Return();
+            }
+
+            return SpireReturn.Continue();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractCreature.class, method = "showHealthBar")
+    public static class ShowHealthBarPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix(AbstractCreature __instance)
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && __instance == AbstractDungeon.player && !enableShowHealthBar)
+            {
+                enableShowHealthBar = true;
+
+                Iterator<Player> players = MultiplayerManager.getPlayers();
+                while (players.hasNext())
+                {
+                    Player player = players.next();
+                    player.character.showHealthBar();
+                }
+
+                enableShowHealthBar = false;
+
+                return SpireReturn.Return();
             }
 
             return SpireReturn.Continue();

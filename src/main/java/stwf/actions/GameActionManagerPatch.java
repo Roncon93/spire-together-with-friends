@@ -9,6 +9,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.actions.common.DamageAction;
+import com.megacrit.cardcrawl.actions.common.GainBlockAction;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
@@ -20,6 +21,8 @@ import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 
 public class GameActionManagerPatch
 {
+    private static final Json JSON = new Json();
+
     public static boolean skipMessage = false;
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
@@ -46,17 +49,39 @@ public class GameActionManagerPatch
                 Player player = MultiplayerManager.getPlayer(playerId);
                 player.character.useFastAttackAnimation();
 
-                DamageActionMessage message = new Json().fromJson(DamageActionMessage.class, value);
+                DamageActionMessage message = JSON.fromJson(DamageActionMessage.class, value);
 
                 AbstractMonster target = AbstractDungeon.currMapNode.room.monsters.monsters.get(message.targetId);
                 DamageInfo info = new DamageInfo(player.character, message.damage, message.type);
 
                 DamageAction action = new DamageAction(target, info, message.effect);
 
-                skipMessage = true;
-                AbstractDungeon.actionManager.addToBottom(action);
-                skipMessage = false;
+                addAction(action, message.addToBottom);
             }
+
+            else if (key.equals("action.block"))
+            {
+                Player player = MultiplayerManager.getPlayer(playerId);
+                GainBlockActionMessage message = JSON.fromJson(GainBlockActionMessage.class, value);
+
+                GainBlockAction action = new GainBlockAction(player.character, message.amount);
+
+                addAction(action, message.addToBottom);
+            }
+        }
+
+        private void addAction(AbstractGameAction action, boolean addToBottom)
+        {
+            skipMessage = true;
+            if (addToBottom)
+            {
+                AbstractDungeon.actionManager.addToBottom(action);
+            }
+            else
+            {
+                AbstractDungeon.actionManager.addToTop(action);
+            }
+            skipMessage = false;
         }
     };
 
@@ -103,15 +128,34 @@ public class GameActionManagerPatch
                     e.printStackTrace();
                 }
             }
+
+            else if (action instanceof GainBlockAction)
+            {
+                GainBlockAction gainBlockAction = (GainBlockAction)action;
+
+                GainBlockActionMessage message = new GainBlockActionMessage();
+                message.amount = gainBlockAction.amount;
+
+                MultiplayerManager.sendPlayerData("action.block", new Json().toJson(message));
+            }
         }
     }
 
-    public static class DamageActionMessage
+    public static abstract class ActionMessage
+    {
+        public Boolean addToBottom = true;
+    }
+
+    public static class DamageActionMessage extends ActionMessage
     {
         public Integer targetId;
         public Integer damage;
         public DamageInfo.DamageType type;
         public AbstractGameAction.AttackEffect effect;
-        public Boolean addToBottom;
+    }
+
+    public static class GainBlockActionMessage extends ActionMessage
+    {
+        public Integer amount;
     }
 }
