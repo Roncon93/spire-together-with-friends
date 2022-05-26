@@ -23,6 +23,7 @@ public class AbstractPlayerPatch
     public static boolean enablePreBattlePrep = false;
     public static boolean enableShowHealthBar = false;
     public static boolean enableLoseBlock = false;
+    public static boolean enableDamage = false;
 
     private static final float[][] POSITIONS =
     {
@@ -141,6 +142,7 @@ public class AbstractPlayerPatch
             return SpireReturn.Continue();
         }
     }
+    
 
     @SpirePatch2(clz = AbstractCreature.class, method = "loseBlock", paramtypez = { int.class, boolean.class })
     public static class LoseBlockPatch

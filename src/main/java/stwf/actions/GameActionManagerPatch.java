@@ -1,11 +1,13 @@
 package stwf.actions;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 
 import com.badlogic.gdx.utils.Json;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
+import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
@@ -19,6 +21,7 @@ import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.powers.VulnerablePower;
 import com.megacrit.cardcrawl.powers.WeakPower;
 
+import stwf.actions.AbstractGameActionPatch.AbstractGameActionFieldsPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
@@ -140,11 +143,11 @@ public class GameActionManagerPatch
     public static class AddToBottomPatch
     {
         @SpireInsertPatch
-        public static void Prefix(AbstractGameAction action)
+        public static SpireReturn<Void> Prefix(AbstractGameAction action)
         {
-            if (skipMessage)
+            if (skipMessage || AbstractGameActionFieldsPatch.process.get(action))
             {
-                return;
+                return SpireReturn.Continue();
             }
 
             if (action instanceof DamageAction)
@@ -152,18 +155,33 @@ public class GameActionManagerPatch
                 try
                 {
                     DamageAction damageAction = (DamageAction)action;
-                    Field info = DamageAction.class.getDeclaredField("info");
-                    info.setAccessible(true);
+                    Field infoField = DamageAction.class.getDeclaredField("info");
+                    infoField.setAccessible(true);
+                    DamageInfo info = (DamageInfo)infoField.get(damageAction);
 
                     if (damageAction.target instanceof AbstractPlayer)
                     {
-                        return;
+                        Iterator<Player> players = MultiplayerManager.getPlayers();
+                        while (players.hasNext())
+                        {
+                            Player player = players.next();
+
+                            if (!player.isLocal)
+                            {
+                                DamageAction newAction = new DamageAction(player.character, info);
+                                AbstractGameActionFieldsPatch.process.set(newAction, true);
+
+                                AbstractDungeon.actionManager.addToBottom(newAction);
+                            }
+                        }
+
+                        return SpireReturn.Continue();
                     }
 
                     DamageActionMessage message = new DamageActionMessage();
                     message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(damageAction.target);
-                    message.damage = ((DamageInfo)info.get(damageAction)).base;
-                    message.type = ((DamageInfo)info.get(damageAction)).type;
+                    message.damage = info.base;
+                    message.type = info.type;
                     message.effect = damageAction.attackEffect;
                     message.addToBottom = true;
 
@@ -181,7 +199,7 @@ public class GameActionManagerPatch
 
                 if (gainBlockAction.target instanceof AbstractMonster)
                 {
-                    return;
+                    return SpireReturn.Continue();
                 }
 
                 GainBlockActionMessage message = new GainBlockActionMessage();
@@ -195,18 +213,33 @@ public class GameActionManagerPatch
                 try
                 {
                     ApplyPowerAction applyPowerAction = (ApplyPowerAction)action;
-                    Field powerToApply = ApplyPowerAction.class.getDeclaredField("powerToApply");
-                    powerToApply.setAccessible(true);
+                    Field powerToApplyField = ApplyPowerAction.class.getDeclaredField("powerToApply");
+                    powerToApplyField.setAccessible(true);
+                    AbstractPower powerToApply = (AbstractPower)powerToApplyField.get(applyPowerAction);
 
                     if (applyPowerAction.source instanceof AbstractMonster)
                     {
-                        return;
+                        Iterator<Player> players = MultiplayerManager.getPlayers();
+                        while (players.hasNext())
+                        {
+                            Player player = players.next();
+
+                            if (!player.isLocal)
+                            {
+                                ApplyPowerAction newAction = new ApplyPowerAction(player.character, applyPowerAction.source, powerToApply, applyPowerAction.amount, false, applyPowerAction.attackEffect);
+                                AbstractGameActionFieldsPatch.process.set(newAction, true);
+
+                                AbstractDungeon.actionManager.addToBottom(newAction);
+                            }
+                        }
+
+                        return SpireReturn.Continue();
                     }
 
                     ApplyPowerActionMessage message = new ApplyPowerActionMessage();
                     message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(applyPowerAction.target);
-                    message.powerId = ((AbstractPower)powerToApply.get(applyPowerAction)).ID;
-                    message.magicNumber = ((AbstractPower)powerToApply.get(applyPowerAction)).amount;
+                    message.powerId = powerToApply.ID;
+                    message.magicNumber = powerToApply.amount;
 
                     MultiplayerManager.sendPlayerData("action.apply-power", JSON.toJson(message));
                 }
@@ -215,6 +248,8 @@ public class GameActionManagerPatch
                     e.printStackTrace();
                 }
             }
+
+            return SpireReturn.Continue();
         }
     }
 
