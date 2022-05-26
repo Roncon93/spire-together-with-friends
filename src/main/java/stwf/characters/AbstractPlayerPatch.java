@@ -3,6 +3,7 @@ package stwf.characters;
 import java.util.Iterator;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.Json;
 import com.evacipated.cardcrawl.modthespire.lib.SpireField;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
@@ -19,8 +20,9 @@ import stwf.multiplayer.Player;
 
 public class AbstractPlayerPatch
 {
-    private static boolean enablePreBattlePrep = false;
-    private static boolean enableShowHealthBar = false;
+    public static boolean enablePreBattlePrep = false;
+    public static boolean enableShowHealthBar = false;
+    public static boolean enableLoseBlock = false;
 
     private static final float[][] POSITIONS =
     {
@@ -140,6 +142,20 @@ public class AbstractPlayerPatch
         }
     }
 
+    @SpirePatch2(clz = AbstractCreature.class, method = "loseBlock", paramtypez = { int.class, boolean.class })
+    public static class LoseBlockPatch
+    {
+        @SpireInsertPatch
+        public static void Prefix(AbstractCreature __instance, int amount, boolean noAnimation)
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && __instance == AbstractDungeon.player)
+            {
+                LoseBlockMessage message = new LoseBlockMessage(amount, noAnimation);             
+                MultiplayerManager.sendPlayerData("player.lose-block", new Json().toJson(message));
+            }
+        }
+    }
+
     @SpirePatch2(clz = AbstractPlayer.class, method = "movePosition")
     public static class MovePositionPatch
     {
@@ -164,6 +180,23 @@ public class AbstractPlayerPatch
 
             enableMovePosition = false;            
             return SpireReturn.Return();
+        }
+    }
+
+    public static class LoseBlockMessage
+    {
+        public Integer amount;
+        public Boolean noAnimation;
+
+        public LoseBlockMessage()
+        {
+            this(0, false);
+        }
+
+        public LoseBlockMessage(int amount, boolean noAnimation)
+        {
+            this.amount = amount;
+            this.noAnimation = noAnimation;
         }
     }
 }

@@ -27,6 +27,14 @@ public class MultiplayerManager
         }
     }
 
+    public static void addLobbyCallback(MultiplayerServiceLobbyCallback callback, String... keys)
+    {
+        if (multiplayerService != null)
+        {
+            multiplayerService.addLobbyCallback(callback, keys);
+        }
+    }
+
     public static void removeLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
         if (multiplayerService != null)
@@ -51,6 +59,26 @@ public class MultiplayerManager
         }
     }
 
+    public static String getLobbyData(String key)
+    {
+        if (multiplayerService != null)
+        {
+            return multiplayerService.getLobbyData(lobby.id, key);
+        }
+
+        return null;
+    }
+
+    public static String getPlayerData(MultiplayerId playerId, String key)
+    {
+        if (multiplayerService != null)
+        {
+            return multiplayerService.getPlayerData(lobby.id, playerId, key);
+        }
+
+        return null;
+    }
+
     public static boolean inMultiplayerLobby()
     {
         return lobby != null;
@@ -73,7 +101,8 @@ public class MultiplayerManager
             return false;
         }
 
-        return multiplayerService.sendLobbyData(lobby.id, "lobby.phase.dungeon", Boolean.toString(true));
+        multiplayerService.sendLobbyData(lobby.id, "lobby.phase.dungeon", Boolean.toString(true));
+        return true;
     }
 
     public static void setLobby(MultiplayerLobby lobby)

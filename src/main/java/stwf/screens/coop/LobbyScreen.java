@@ -133,7 +133,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
         characterSelect.enable();
         characterSelect.deselect();
 
-        multiplayerService.addLobbyCallback(this);
+        multiplayerService.addLobbyCallback(this, "lobby.character", "lobby.ready", "lobby.embark");
     }
 
     @Override
@@ -266,19 +266,19 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     {
         LobbyPlayer lobbyPlayer = playerList.get(playerId);
 
-        switch (key)
+        if (key.equals("lobby.character"))
         {
-            case "lobby.character":
-                onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
-                break;
+            onPlayerSelectedCharacterUpdated(lobbyPlayer, parseCharacter(value));
+        }
 
-            case "lobby.ready":
-                onPlayerReadyStatusUpdated(lobbyPlayer, Boolean.parseBoolean(value));
-                break;
+        else if (key.equals("lobby.ready"))
+        {
+            onPlayerReadyStatusUpdated(lobbyPlayer, Boolean.parseBoolean(value));
+        }
 
-            case "lobby.embark":
-                onPlayersEmbarking(JSON.fromJson(EmbarkMessage.class, value));
-                break;
+        else if (key.equals("lobby.embark"))
+        {
+            onPlayersEmbarking(JSON.fromJson(EmbarkMessage.class, value));
         }
     }
 

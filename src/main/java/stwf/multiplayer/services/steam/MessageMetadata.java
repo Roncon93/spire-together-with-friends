@@ -7,6 +7,8 @@ import com.badlogic.gdx.utils.JsonValue;
 
 public class MessageMetadata implements Json.Serializable
 {
+    private static final Json JSON = new Json();
+
     public UUID id;
     public String key;
 
@@ -22,5 +24,10 @@ public class MessageMetadata implements Json.Serializable
     {
         json.writeValue("id", id.toString());
         json.writeValue("key", key);
+    }
+
+    @Override
+    public String toString() {
+        return JSON.toJson(this);
     }
 }

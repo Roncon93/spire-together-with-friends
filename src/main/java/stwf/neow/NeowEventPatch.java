@@ -71,12 +71,14 @@ public class NeowEventPatch
                     }
                 });
             }
+
             else if (key.equals("event.neow.mini-blessing"))
             {
                 enableMiniBlessing = true;
                 MiniBlessingMethodPatch.invoke();
                 enableMiniBlessing = false;
             }
+
             else if (key.equals("event.neow.blessing"))
             {
                 BlessingMethodPatch.Payload payload = JSON.fromJson(BlessingMethodPatch.Payload.class, value);
@@ -102,7 +104,7 @@ public class NeowEventPatch
             if (MultiplayerManager.inMultiplayerLobby())
             {
                 AbstractPlayerPatch.initializeLocalPlayer();
-                MultiplayerManager.addLobbyCallback(callback);
+                MultiplayerManager.addLobbyCallback(callback, "event.neow.talked", "event.neow.mini-blessing", "event.neow.blessing");
             }
         }
     }

@@ -17,6 +17,8 @@ public interface MultiplayerServiceInterface
 
     void addLobbyCallback(MultiplayerServiceLobbyCallback callback);
 
+    void addLobbyCallback(MultiplayerServiceLobbyCallback callback, String... keys);
+
     void removeLobbyCallback(MultiplayerServiceLobbyCallback callback);
 
     void createLobby(MultiplayerLobbyType type, int maxPlayers, MultiplayerServiceOnLobbyCreatedCallback callback);
@@ -29,9 +31,9 @@ public interface MultiplayerServiceInterface
 
     String getLobbyData(MultiplayerId lobbyId, String key);
 
-    boolean sendLobbyData(MultiplayerId id, String key);
+    void sendLobbyData(MultiplayerId id, String key);
 
-    boolean sendLobbyData(MultiplayerId id, String key, String value);
+    void sendLobbyData(MultiplayerId id, String key, String value);
 
     void sendPlayerData(MultiplayerId lobbyId, String key);
 

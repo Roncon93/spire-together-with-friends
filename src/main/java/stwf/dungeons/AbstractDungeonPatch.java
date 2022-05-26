@@ -55,7 +55,7 @@ public class AbstractDungeonPatch
                         MapRoomNodePatch.shouldContinue = false;
                     }
                 });  
-            }
+            }    
         }
     };
 
@@ -65,7 +65,7 @@ public class AbstractDungeonPatch
         @SpireInsertPatch
         public static void Postfix()
         {
-            MultiplayerManager.addLobbyCallback(callback);
+            MultiplayerManager.addLobbyCallback(callback, "map.room.selected");
         }
     }
 

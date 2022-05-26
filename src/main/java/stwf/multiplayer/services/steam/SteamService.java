@@ -2,13 +2,11 @@ package stwf.multiplayer.services.steam;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.utils.Json;
 import com.codedisaster.steamworks.SteamFriends;
 import com.codedisaster.steamworks.SteamID;
 import com.codedisaster.steamworks.SteamMatchmaking;
@@ -62,6 +60,7 @@ public class SteamService implements MultiplayerServiceInterface
         matchmakingCallback.lobbyCallbacks = lobbyCallbacks;
     }
 
+    @Override
     public void addLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
         if (!lobbyCallbacks.contains(callback))
@@ -70,6 +69,21 @@ public class SteamService implements MultiplayerServiceInterface
         }
     }
 
+    @Override
+    public void addLobbyCallback(MultiplayerServiceLobbyCallback callback, String... keys)
+    {
+        if (!lobbyCallbacks.contains(callback))
+        {
+            for (String key : keys)
+            {
+                matchmakingCallback.readMessages.put(key, "");
+            }
+
+            lobbyCallbacks.add(callback);
+        }
+    }
+
+    @Override
     public void removeLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
         if (lobbyCallbacks.contains(callback))
@@ -78,6 +92,7 @@ public class SteamService implements MultiplayerServiceInterface
         }
     }
 
+    @Override
     public void createLobby(MultiplayerLobbyType type, int maxPlayers, MultiplayerServiceOnLobbyCreatedCallback callback)
     {
         matchmakingCallback.onLobbyCreatedCallbacks.add(callback);
@@ -95,6 +110,7 @@ public class SteamService implements MultiplayerServiceInterface
         matchmaking.leaveLobby(SteamServiceUtils.convertGenericIdToSteamId(id));
     }
 
+    @Override
     public void getLobbies(MultiplayerServiceOnLobbiesRequestedCallback callback)
     {
         matchmakingCallback.onLobbiesRequestedCallbacks.add(callback);
@@ -140,37 +156,26 @@ public class SteamService implements MultiplayerServiceInterface
     @Override
     public String getLobbyData(MultiplayerId lobbyId, String key)
     {
-        return matchmaking.getLobbyData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), key);
+        return matchmakingCallback.getLobbyData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), key);
     }
 
     @Override
-    public boolean sendLobbyData(MultiplayerId lobbyId, String key)
+    public void sendLobbyData(MultiplayerId lobbyId, String key)
     {
-        return sendLobbyData(lobbyId, key);
+        sendLobbyData(lobbyId, key);
     }
 
     @Override
-    public boolean sendLobbyData(MultiplayerId lobbyId, String key, String value)
+    public void sendLobbyData(MultiplayerId lobbyId, String key, String value)
     {
-        if (!getLobbyData(lobbyId, "lobby.host.id").equals(localSteamUser.getSteamID().toString()))
-        {
-            return false;
-        }
-
-        MessageMetadata metadata = new MessageMetadata();
-        metadata.id = UUID.randomUUID();
-        metadata.key = key;
-
         SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(lobbyId);
 
-        boolean metadataResult = matchmaking.setLobbyData(lobbySteamId, "metadata", new Json().toJson(metadata));
-
-        if (value != null)
+        if (!matchmaking.getLobbyData(lobbySteamId, "lobby.host.id").equals(localSteamUser.getSteamID().toString()))
         {
-            return matchmaking.setLobbyData(lobbySteamId, key, value);
+            return;
         }
 
-        return metadataResult;
+        matchmakingCallback.sendLobbyData(lobbySteamId, key, value);
     }
 
     @Override
@@ -182,18 +187,7 @@ public class SteamService implements MultiplayerServiceInterface
     @Override
     public void sendPlayerData(MultiplayerId lobbyId, String key, String value)
     {
-        MessageMetadata metadata = new MessageMetadata();
-        metadata.id = UUID.randomUUID();
-        metadata.key = key;
-
-        SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(lobbyId);
-
-        matchmaking.setLobbyMemberData(lobbySteamId, "metadata", new Json().toJson(metadata));
-
-        if (value != null)
-        {
-            matchmaking.setLobbyMemberData(lobbySteamId, key, value);
-        }
+        matchmakingCallback.sendPlayerData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), key, value);
     }
 
     @Override
@@ -202,9 +196,10 @@ public class SteamService implements MultiplayerServiceInterface
         sendLobbyData(lobbyId, key, value);
     }
 
+    @Override
     public String getPlayerData(MultiplayerId lobbyId, MultiplayerId playerId, String key)
     {
-        return matchmaking.getLobbyMemberData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), SteamServiceUtils.convertGenericIdToSteamId(playerId), key);
+        return matchmakingCallback.getPlayerData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), SteamServiceUtils.convertGenericIdToSteamId(playerId), key);
     }
 
     public Player getPlayer(MultiplayerId playerId)
