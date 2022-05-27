@@ -18,6 +18,7 @@ import stwf.multiplayer.services.MultiplayerLobbyType;
 import stwf.multiplayer.services.MultiplayerServiceInterface;
 import stwf.multiplayer.services.MultiplayerServiceResult;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyCreatedCallback;
+import stwf.multiplayer.services.steam.SteamService;
 import stwf.multiplayer.services.steam.SteamService.MultiplayerId;
 import stwf.screens.components.LabelComponent;
 
@@ -138,6 +139,7 @@ public class HostGameScreen extends LobbyScreen implements MultiplayerServiceOnL
 
             EmbarkMessage seed = getGameSettings();
 
+            onPlayersEmbarking(seed);
             multiplayerService.sendPlayerData(lobby.id, "lobby.embark", JSON.toJson(seed));
         }
     }

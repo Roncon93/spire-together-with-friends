@@ -59,6 +59,14 @@ public class MultiplayerManager
         }
     }
 
+    public static void sendPlayerData(String key, String value, boolean persist)
+    {
+        if (multiplayerService != null)
+        {
+            multiplayerService.sendPlayerData(lobby.id, key, value, persist);
+        }
+    }
+
     public static String getLobbyData(String key)
     {
         if (multiplayerService != null)

@@ -32,13 +32,12 @@ public class AbstractDungeonPatch
         }
 
         @Override
-        public void onPlayerDataReceived(MultiplayerId lobbyId, MultiplayerId playerId, String key, String value)
+        public void onPlayerDataReceived(MultiplayerId playerId, String key, String value)
         {
-        }
+            System.out.println("Abstract");
+            System.out.println(key);
+            System.out.println(value);
 
-        @Override
-        public void onLobbyDataReceived(MultiplayerId lobbyId, String key, String value)
-        {
             if (key.equals("map.room.selected"))
             {
                 RoomSelectedMessage message = RoomSelectedMessage.fromJson(value);
@@ -55,7 +54,7 @@ public class AbstractDungeonPatch
                         MapRoomNodePatch.shouldContinue = false;
                     }
                 });  
-            }    
+            }  
         }
     };
 

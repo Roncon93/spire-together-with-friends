@@ -62,9 +62,10 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             @Override
             public void onClick(BaseButtonComponent button)
             {
-                localPlayer.isReady = !localPlayer.isReady;
+                onPlayerReadyStatusUpdated(localPlayer, !localPlayer.isReady);
+
                 characterSelect.setDisabled(localPlayer.isReady);
-                multiplayerService.sendPlayerData(lobby.id, "lobby.ready", Boolean.toString(localPlayer.isReady));
+                multiplayerService.sendPlayerData(lobby.id, "lobby.ready", Boolean.toString(localPlayer.isReady), true);
             }
         });
     }
@@ -240,7 +241,9 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
         playerList.setReadyButtonDisabled(false);
 
-        multiplayerService.sendPlayerData(lobby.id, "lobby.character", character.chosenClass.toString());
+        onPlayerSelectedCharacterUpdated(localPlayer, character);
+
+        multiplayerService.sendPlayerData(lobby.id, "lobby.character", character.chosenClass.toString(), true);
     }
 
     @Override
@@ -262,7 +265,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
     }
 
     @Override
-    public void onPlayerDataReceived(MultiplayerId lobbyId, MultiplayerId playerId, String key, String value)
+    public void onPlayerDataReceived(MultiplayerId playerId, String key, String value)
     {
         LobbyPlayer lobbyPlayer = playerList.get(playerId);
 
@@ -281,9 +284,6 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             onPlayersEmbarking(JSON.fromJson(EmbarkMessage.class, value));
         }
     }
-
-    @Override
-    public void onLobbyDataReceived(MultiplayerId lobbyId, String key, String value) {}
 
     protected void onPlayerSelectedCharacterUpdated(LobbyPlayer lobbyPlayer, AbstractPlayer character)
     {

@@ -26,18 +26,19 @@ public class MapRoomNodePatch
     public static class UpdatePatch
     {
         @SpireInsertPatch(locator =  Locator.class)
-        public static SpireReturn<Void> Insert(MapRoomNode __instance, float ___animWaitTimer)
+        public static void Insert(MapRoomNode __instance, float ___animWaitTimer)
         {
-            if (!messageSent && AbstractDungeon.dungeonMapScreen.clicked)
+            if (AbstractDungeon.dungeonMapScreen.clicked)
             {
                 messageSent = true;
                 RoomSelectedMessage message = new RoomSelectedMessage(__instance.x, __instance.y);
-                MultiplayerManager.sendLobbyData("map.room.selected", RoomSelectedMessage.toJson(message));
+                MultiplayerManager.sendPlayerData("map.room.selected", RoomSelectedMessage.toJson(message));
             }
 
-            AbstractDungeon.dungeonMapScreen.clicked = shouldContinue;
-
-            return SpireReturn.Continue();
+            if (shouldContinue)
+            {
+                AbstractDungeon.dungeonMapScreen.clicked = shouldContinue;
+            }
         }
 
         public static class Locator extends SpireInsertLocator

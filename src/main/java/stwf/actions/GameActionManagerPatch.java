@@ -45,10 +45,7 @@ public class GameActionManagerPatch
         public void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId) {}
 
         @Override
-        public void onLobbyDataReceived(MultiplayerId lobbyId, String key, String value) {}
-
-        @Override
-        public void onPlayerDataReceived(MultiplayerId lobbyId, MultiplayerId playerId, String key, String value)
+        public void onPlayerDataReceived(MultiplayerId playerId, String key, String value)
         {
             if (MultiplayerManager.getPlayer(playerId).isLocal)
             {
@@ -153,127 +150,158 @@ public class GameActionManagerPatch
         }
     }
 
+    private static SpireReturn<Void> addToTopOrBottomPatch(AbstractGameAction action, boolean addToBottom)
+    {
+        if (skipMessage || AbstractGameActionFieldsPatch.process.get(action))
+        {
+            return SpireReturn.Continue();
+        }
+
+        if (action instanceof DamageAction)
+        {
+            try
+            {
+                DamageAction damageAction = (DamageAction)action;
+                Field infoField = DamageAction.class.getDeclaredField("info");
+                infoField.setAccessible(true);
+                DamageInfo info = (DamageInfo)infoField.get(damageAction);
+
+                if (damageAction.target instanceof AbstractPlayer)
+                {
+                    Iterator<Player> players = MultiplayerManager.getPlayers();
+                    while (players.hasNext())
+                    {
+                        Player player = players.next();
+
+                        if (!player.isLocal)
+                        {
+                            DamageAction newAction = new DamageAction(player.character, info);
+                            AbstractGameActionFieldsPatch.process.set(newAction, true);
+
+                            if (addToBottom)
+                            {
+                                AbstractDungeon.actionManager.addToBottom(newAction);
+                            }
+                            else
+                            {
+                                AbstractDungeon.actionManager.addToTop(newAction);
+                            }
+                        }
+                    }
+
+                    return SpireReturn.Continue();
+                }
+
+                DamageActionMessage message = new DamageActionMessage();
+                message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(damageAction.target);
+                message.damage = info.base;
+                message.type = info.type;
+                message.effect = damageAction.attackEffect;
+                message.addToBottom = addToBottom;
+
+                MultiplayerManager.sendPlayerData("action.damage", JSON.toJson(message));
+                System.out.println("GameActionPatch action sent");
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        else if (action instanceof GainBlockAction)
+        {
+            GainBlockAction gainBlockAction = (GainBlockAction)action;
+
+            if (gainBlockAction.target instanceof AbstractMonster)
+            {
+                return SpireReturn.Continue();
+            }
+
+            GainBlockActionMessage message = new GainBlockActionMessage();
+            message.addToBottom = addToBottom;
+            message.amount = gainBlockAction.amount;
+
+            MultiplayerManager.sendPlayerData("action.block", JSON.toJson(message));
+        }
+
+        else if (action instanceof ApplyPowerAction)
+        {
+            try
+            {
+                ApplyPowerAction applyPowerAction = (ApplyPowerAction)action;
+                Field powerToApplyField = ApplyPowerAction.class.getDeclaredField("powerToApply");
+                powerToApplyField.setAccessible(true);
+                AbstractPower powerToApply = (AbstractPower)powerToApplyField.get(applyPowerAction);
+
+                if (applyPowerAction.source instanceof AbstractMonster)
+                {
+                    Iterator<Player> players = MultiplayerManager.getPlayers();
+                    while (players.hasNext())
+                    {
+                        Player player = players.next();
+
+                        if (!player.isLocal)
+                        {
+                            ApplyPowerAction newAction = new ApplyPowerAction(player.character, applyPowerAction.source, powerToApply, applyPowerAction.amount, false, applyPowerAction.attackEffect);
+                            AbstractGameActionFieldsPatch.process.set(newAction, true);
+
+                            if (addToBottom)
+                            {
+                                AbstractDungeon.actionManager.addToBottom(newAction);
+                            }
+                            else
+                            {
+                                AbstractDungeon.actionManager.addToTop(newAction);
+                            }
+                        }
+                    }
+
+                    return SpireReturn.Continue();
+                }
+
+                ApplyPowerActionMessage message = new ApplyPowerActionMessage();                
+                message.powerId = powerToApply.ID;
+                message.magicNumber = powerToApply.amount;
+                message.addToBottom = addToBottom;
+
+                if (applyPowerAction.target.isPlayer)
+                {
+                    message.isTargetMonster = false;
+                }
+                else
+                {
+                    message.isTargetMonster = true;
+                    message.targetId = Integer.toString(AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(applyPowerAction.target));
+                }
+
+                MultiplayerManager.sendPlayerData("action.apply-power", JSON.toJson(message));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return SpireReturn.Continue();
+    }
+
+    @SpirePatch2(clz = GameActionManager.class, method = "addToTop")
+    public static class AddToTopPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix(AbstractGameAction action)
+        {
+            return addToTopOrBottomPatch(action, false);
+        }
+    }
+
     @SpirePatch2(clz = GameActionManager.class, method = "addToBottom")
     public static class AddToBottomPatch
     {
         @SpireInsertPatch
         public static SpireReturn<Void> Prefix(AbstractGameAction action)
         {
-            if (skipMessage || AbstractGameActionFieldsPatch.process.get(action))
-            {
-                return SpireReturn.Continue();
-            }
-
-            if (action instanceof DamageAction)
-            {
-                try
-                {
-                    DamageAction damageAction = (DamageAction)action;
-                    Field infoField = DamageAction.class.getDeclaredField("info");
-                    infoField.setAccessible(true);
-                    DamageInfo info = (DamageInfo)infoField.get(damageAction);
-
-                    if (damageAction.target instanceof AbstractPlayer)
-                    {
-                        Iterator<Player> players = MultiplayerManager.getPlayers();
-                        while (players.hasNext())
-                        {
-                            Player player = players.next();
-
-                            if (!player.isLocal)
-                            {
-                                DamageAction newAction = new DamageAction(player.character, info);
-                                AbstractGameActionFieldsPatch.process.set(newAction, true);
-
-                                AbstractDungeon.actionManager.addToBottom(newAction);
-                            }
-                        }
-
-                        return SpireReturn.Continue();
-                    }
-
-                    DamageActionMessage message = new DamageActionMessage();
-                    message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(damageAction.target);
-                    message.damage = info.base;
-                    message.type = info.type;
-                    message.effect = damageAction.attackEffect;
-                    message.addToBottom = true;
-
-                    MultiplayerManager.sendPlayerData("action.damage", JSON.toJson(message));
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
-
-            else if (action instanceof GainBlockAction)
-            {
-                GainBlockAction gainBlockAction = (GainBlockAction)action;
-
-                if (gainBlockAction.target instanceof AbstractMonster)
-                {
-                    return SpireReturn.Continue();
-                }
-
-                GainBlockActionMessage message = new GainBlockActionMessage();
-                message.amount = gainBlockAction.amount;
-
-                MultiplayerManager.sendPlayerData("action.block", JSON.toJson(message));
-            }
-
-            else if (action instanceof ApplyPowerAction)
-            {
-                try
-                {
-                    ApplyPowerAction applyPowerAction = (ApplyPowerAction)action;
-                    Field powerToApplyField = ApplyPowerAction.class.getDeclaredField("powerToApply");
-                    powerToApplyField.setAccessible(true);
-                    AbstractPower powerToApply = (AbstractPower)powerToApplyField.get(applyPowerAction);
-
-                    if (applyPowerAction.source instanceof AbstractMonster)
-                    {
-                        Iterator<Player> players = MultiplayerManager.getPlayers();
-                        while (players.hasNext())
-                        {
-                            Player player = players.next();
-
-                            if (!player.isLocal)
-                            {
-                                ApplyPowerAction newAction = new ApplyPowerAction(player.character, applyPowerAction.source, powerToApply, applyPowerAction.amount, false, applyPowerAction.attackEffect);
-                                AbstractGameActionFieldsPatch.process.set(newAction, true);
-
-                                AbstractDungeon.actionManager.addToBottom(newAction);
-                            }
-                        }
-
-                        return SpireReturn.Continue();
-                    }
-
-                    ApplyPowerActionMessage message = new ApplyPowerActionMessage();
-                    
-                    message.powerId = powerToApply.ID;
-                    message.magicNumber = powerToApply.amount;
-
-                    if (applyPowerAction.target.isPlayer)
-                    {
-                        message.isTargetMonster = false;
-                    }
-                    else
-                    {
-                        message.isTargetMonster = true;
-                        message.targetId = Integer.toString(AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(applyPowerAction.target));
-                    }
-
-                    MultiplayerManager.sendPlayerData("action.apply-power", JSON.toJson(message));
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
-
-            return SpireReturn.Continue();
+            return addToTopOrBottomPatch(action, true);
         }
     }
 
