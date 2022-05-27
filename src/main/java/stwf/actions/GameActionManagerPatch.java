@@ -15,9 +15,11 @@ import com.megacrit.cardcrawl.actions.common.DamageAction;
 import com.megacrit.cardcrawl.actions.common.GainBlockAction;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.powers.AbstractPower;
+import com.megacrit.cardcrawl.powers.PoisonPower;
 import com.megacrit.cardcrawl.powers.VulnerablePower;
 import com.megacrit.cardcrawl.powers.WeakPower;
 
@@ -48,7 +50,7 @@ public class GameActionManagerPatch
         @Override
         public void onPlayerDataReceived(MultiplayerId lobbyId, MultiplayerId playerId, String key, String value)
         {
-            if (playerId.equals(MultiplayerManager.getLocalPlayer().profile.id))
+            if (MultiplayerManager.getPlayer(playerId).isLocal)
             {
                 return;
             }
@@ -92,7 +94,15 @@ public class GameActionManagerPatch
 
                 ApplyPowerActionMessage message = JSON.fromJson(ApplyPowerActionMessage.class, value);
 
-                AbstractMonster target = AbstractDungeon.currMapNode.room.monsters.monsters.get(message.targetId);
+                AbstractCreature target;
+                if (message.isTargetMonster)
+                {
+                    target = AbstractDungeon.currMapNode.room.monsters.monsters.get(Integer.parseInt(message.targetId));
+                }
+                else
+                {
+                    target = player.character;
+                }                    
 
                 AbstractPower power = null;
 
@@ -103,6 +113,10 @@ public class GameActionManagerPatch
                 else if (message.powerId.equals(WeakPower.POWER_ID))
                 {
                     power = new WeakPower(target, message.magicNumber, false);
+                }
+                else if (message.powerId.equals(PoisonPower.POWER_ID))
+                {
+                    power = new PoisonPower(target, player.character, message.magicNumber);
                 }
 
                 if (power != null)
@@ -237,9 +251,19 @@ public class GameActionManagerPatch
                     }
 
                     ApplyPowerActionMessage message = new ApplyPowerActionMessage();
-                    message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(applyPowerAction.target);
+                    
                     message.powerId = powerToApply.ID;
                     message.magicNumber = powerToApply.amount;
+
+                    if (applyPowerAction.target.isPlayer)
+                    {
+                        message.isTargetMonster = false;
+                    }
+                    else
+                    {
+                        message.isTargetMonster = true;
+                        message.targetId = Integer.toString(AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(applyPowerAction.target));
+                    }
 
                     MultiplayerManager.sendPlayerData("action.apply-power", JSON.toJson(message));
                 }
@@ -268,7 +292,8 @@ public class GameActionManagerPatch
 
     public static class ApplyPowerActionMessage extends ActionMessage
     {
-        public Integer targetId;
+        public boolean isTargetMonster;
+        public String targetId;
         public String powerId;
         public Integer magicNumber;
     }
