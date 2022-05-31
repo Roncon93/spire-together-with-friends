@@ -3,6 +3,7 @@ package stwf.actions;
 import java.lang.reflect.Field;
 import java.util.Iterator;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Json;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
@@ -77,14 +78,6 @@ public class GameActionManagerPatch
                 addAction(action, message.addToBottom);
             }
 
-            else if (key.equals("player.lose-block"))
-            {
-                Player player = MultiplayerManager.getPlayer(playerId);
-                LoseBlockMessage message = JSON.fromJson(LoseBlockMessage.class, value);
-
-                player.character.loseBlock(message.amount, message.noAnimation);
-            }
-
             else if (key.equals("action.apply-power"))
             {
                 Player player = MultiplayerManager.getPlayer(playerId);
@@ -122,6 +115,34 @@ public class GameActionManagerPatch
 
                     addAction(action, message.addToBottom);
                 }
+            }
+
+            else if (key.equals("player.lose-block"))
+            {
+                Player player = MultiplayerManager.getPlayer(playerId);
+                LoseBlockMessage message = JSON.fromJson(LoseBlockMessage.class, value);
+
+                player.character.loseBlock(message.amount, message.noAnimation);
+            }
+
+            else if (key.equals("player.increase-max-hp"))
+            {
+                Player player = MultiplayerManager.getPlayer(playerId);
+
+                Gdx.app.postRunnable(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        player.character.increaseMaxHp(Integer.parseInt(value), true);
+                    }   
+                });
+            }
+
+            else if (key.equals("player.decrease-max-hp"))
+            {
+                Player player = MultiplayerManager.getPlayer(playerId);
+                player.character.decreaseMaxHealth(Integer.parseInt(value));
             }
         }
 

@@ -142,7 +142,6 @@ public class AbstractPlayerPatch
             return SpireReturn.Continue();
         }
     }
-    
 
     @SpirePatch2(clz = AbstractCreature.class, method = "loseBlock", paramtypez = { int.class, boolean.class })
     public static class LoseBlockPatch
@@ -154,6 +153,32 @@ public class AbstractPlayerPatch
             {
                 LoseBlockMessage message = new LoseBlockMessage(amount, noAnimation);             
                 MultiplayerManager.sendPlayerData("player.lose-block", new Json().toJson(message));
+            }
+        }
+    }
+
+    @SpirePatch2(clz = AbstractCreature.class, method = "increaseMaxHp")
+    public static class IncreaseMaxHpPatch
+    {
+        @SpireInsertPatch
+        public static void Prefix(AbstractCreature __instance, int amount)
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && __instance == AbstractDungeon.player)
+            {            
+                MultiplayerManager.sendPlayerData("player.increase-max-hp", Integer.toString(amount));
+            }
+        }
+    }
+
+    @SpirePatch2(clz = AbstractCreature.class, method = "decreaseMaxHealth")
+    public static class DecreaseMaxHpPatch
+    {
+        @SpireInsertPatch
+        public static void Prefix(AbstractCreature __instance, int amount)
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && __instance == AbstractDungeon.player)
+            {       
+                MultiplayerManager.sendPlayerData("player.decrease-max-hp", Integer.toString(amount));
             }
         }
     }
