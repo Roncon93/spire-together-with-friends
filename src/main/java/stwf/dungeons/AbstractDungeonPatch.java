@@ -34,10 +34,6 @@ public class AbstractDungeonPatch
         @Override
         public void onPlayerDataReceived(MultiplayerId playerId, String key, String value)
         {
-            System.out.println("Abstract");
-            System.out.println(key);
-            System.out.println(value);
-
             if (key.equals("map.room.selected"))
             {
                 RoomSelectedMessage message = RoomSelectedMessage.fromJson(value);

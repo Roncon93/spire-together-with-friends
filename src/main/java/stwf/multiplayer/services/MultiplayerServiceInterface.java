@@ -15,6 +15,8 @@ public interface MultiplayerServiceInterface
 
     PlayerProfile getLocalPlayerProfile();
 
+    boolean isLocalPlayerHost(MultiplayerId lobbyId);
+
     void addLobbyCallback(MultiplayerServiceLobbyCallback callback);
 
     void addLobbyCallback(MultiplayerServiceLobbyCallback callback, String... keys);

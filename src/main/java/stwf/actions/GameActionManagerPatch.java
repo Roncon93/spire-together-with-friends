@@ -200,7 +200,6 @@ public class GameActionManagerPatch
                 message.addToBottom = addToBottom;
 
                 MultiplayerManager.sendPlayerData("action.damage", JSON.toJson(message));
-                System.out.println("GameActionPatch action sent");
             }
             catch (Exception e)
             {

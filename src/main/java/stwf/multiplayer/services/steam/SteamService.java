@@ -188,14 +188,12 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
     @Override
     public void sendLobbyData(MultiplayerId lobbyId, String key, String value)
     {
-        SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(lobbyId);
-
-        if (!matchmakingService.getLobbyData(lobbySteamId, "lobby.host.id").equals(localSteamUser.getSteamID().toString()))
+        if (!isLocalPlayerHost(lobbyId))
         {
             return;
         }
 
-        matchmakingCallback.sendLobbyData(lobbySteamId, key, value);
+        matchmakingCallback.sendLobbyData(SteamServiceUtils.convertGenericIdToSteamId(lobbyId), key, value);
     }
 
     @Override
@@ -218,7 +216,19 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
     @Override
     public void sendHostPlayerData(MultiplayerId lobbyId, String key, String value)
     {
-        sendLobbyData(lobbyId, key, value);
+        if (!isLocalPlayerHost(lobbyId))
+        {
+            return;
+        }
+
+        sendPlayerData(lobbyId, key, value);
+    }
+
+    @Override
+    public boolean isLocalPlayerHost(MultiplayerId lobbyId)
+    {
+        SteamID lobbySteamId = SteamServiceUtils.convertGenericIdToSteamId(lobbyId);
+        return matchmakingService.getLobbyData(lobbySteamId, "lobby.host.id").equals(localSteamUser.getSteamID().toString());
     }
 
     @Override

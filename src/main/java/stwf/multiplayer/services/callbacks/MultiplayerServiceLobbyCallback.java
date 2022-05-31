@@ -9,6 +9,4 @@ public interface MultiplayerServiceLobbyCallback
     void onPlayerLeft(MultiplayerId lobbyId, MultiplayerId playerId);
 
     void onPlayerDataReceived(MultiplayerId playerId, String key, String value);
-
-    void onLobbyDataReceived(MultiplayerId lobbyId, String key, String value);
 }

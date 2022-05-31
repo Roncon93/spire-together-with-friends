@@ -40,7 +40,7 @@ public class NeowEventPatch
 
     private static final Json JSON = new Json();
 
-    private static MultiplayerServiceLobbyCallback callback = new MultiplayerServiceLobbyCallback()
+    private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
     {
         @Override
         public void onPlayerJoined(MultiplayerId lobbyId, MultiplayerId playerId)
@@ -87,11 +87,6 @@ public class NeowEventPatch
                 enableBlessing = false;
             }
         }
-
-        @Override
-        public void onLobbyDataReceived(MultiplayerId lobbyId, String key, String value)
-        {
-        }
     };
 
     @SpirePatch2(clz = NeowEvent.class, method = SpirePatch.CONSTRUCTOR, paramtypez={boolean.class})
@@ -106,7 +101,7 @@ public class NeowEventPatch
             if (MultiplayerManager.inMultiplayerLobby())
             {
                 AbstractPlayerPatch.initializeLocalPlayer();
-                MultiplayerManager.addLobbyCallback(callback, "event.neow.talked", "event.neow.mini-blessing", "event.neow.blessing");
+                MultiplayerManager.addLobbyCallback(CALLBACK, "event.neow.talked", "event.neow.mini-blessing", "event.neow.blessing");
 
                 AbstractDungeon.player.masterDeck.addToTop(CardLibrary.getCard(Flechettes.ID).makeCopy());
                 AbstractDungeon.player.masterDeck.addToTop(CardLibrary.getCard(Flechettes.ID).makeCopy());
@@ -123,9 +118,14 @@ public class NeowEventPatch
             {
                 return SpireReturn.Continue();
             }
-
-            MultiplayerManager.sendPlayerData(lobbyMessageKey, lobbyMessageValue);
-            return SpireReturn.Continue();
+            else if (MultiplayerManager.isLocalPlayerHost())
+            {
+                MultiplayerManager.sendPlayerData(lobbyMessageKey, lobbyMessageValue);
+                CALLBACK.onPlayerDataReceived(MultiplayerManager.getLocalPlayer().profile.id, lobbyMessageKey, lobbyMessageValue);
+                return SpireReturn.Return();
+            }
+            
+            return SpireReturn.Return();
         }
 
         private static void invoke(Class<?> cls, String methodName, Object ...arguments)
@@ -191,7 +191,7 @@ public class NeowEventPatch
 
         private static void invoke()
         {
-            PrivateMethodPatch.invoke(NeowEvent.class, "blessing");
+            PrivateMethodPatch.invoke(NeowEvent.class, "miniBlessing");
         }
     }
 
@@ -205,18 +205,26 @@ public class NeowEventPatch
             {
                 return SpireReturn.Continue();
             }
-
-            Payload payload = new Payload();
-            for (int i = 0; i < 4; i++)
+            else if (MultiplayerManager.isLocalPlayerHost())
             {
-                NeowReward reward = new NeowReward(i);
-                int rewardIndex = NeowRewardFieldPatch.rewardIndex.get(reward);
-                payload.rewardIndices.add(rewardIndex);
-                payload.drawbackIndex = NeowRewardFieldPatch.drawbackIndex.get(reward);
-            }
+                Payload payload = new Payload();
+                for (int i = 0; i < 4; i++)
+                {
+                    NeowReward reward = new NeowReward(i);
+                    int rewardIndex = NeowRewardFieldPatch.rewardIndex.get(reward);
+                    payload.rewardIndices.add(rewardIndex);
+                    payload.drawbackIndex = NeowRewardFieldPatch.drawbackIndex.get(reward);
+                }
 
-            MultiplayerManager.sendPlayerData("event.neow.blessing", JSON.toJson(payload));
-            return SpireReturn.Continue();
+                String key = "event.neow.blessing";
+                String value = JSON.toJson(payload);
+
+                MultiplayerManager.sendPlayerData(key, value);
+                CALLBACK.onPlayerDataReceived(MultiplayerManager.getLocalPlayer().profile.id, key, value);
+                return SpireReturn.Return();
+            }
+            
+            return SpireReturn.Return();
         }
 
         private static void invoke()
@@ -249,7 +257,7 @@ public class NeowEventPatch
         {
             if (MultiplayerManager.inMultiplayerLobby())
             {
-                MultiplayerManager.removeLobbyCallback(callback);
+                MultiplayerManager.removeLobbyCallback(CALLBACK);
             }
         }
     }

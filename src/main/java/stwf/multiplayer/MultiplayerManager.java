@@ -59,6 +59,14 @@ public class MultiplayerManager
         }
     }
 
+    public static void sendHostPlayerData(String key, String value)
+    {
+        if (multiplayerService != null && isLocalPlayerHost())
+        {
+            multiplayerService.sendPlayerData(lobby.id, key, value);
+        }
+    }
+
     public static void sendPlayerData(String key, String value, boolean persist)
     {
         if (multiplayerService != null)
@@ -162,6 +170,11 @@ public class MultiplayerManager
 
     public static boolean isLocalPlayerHost()
     {
-        return true;        
+        if (lobby == null)
+        {
+            return false;
+        }
+
+        return multiplayerService.isLocalPlayerHost(lobby.id);
     }
 }
