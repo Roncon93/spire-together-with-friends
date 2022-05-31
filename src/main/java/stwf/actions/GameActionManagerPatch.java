@@ -233,7 +233,7 @@ public class GameActionManagerPatch
                 powerToApplyField.setAccessible(true);
                 AbstractPower powerToApply = (AbstractPower)powerToApplyField.get(applyPowerAction);
 
-                if (applyPowerAction.source instanceof AbstractMonster)
+                if (applyPowerAction.source instanceof AbstractMonster && applyPowerAction.target instanceof AbstractPlayer)
                 {
                     Iterator<Player> players = MultiplayerManager.getPlayers();
                     while (players.hasNext())
