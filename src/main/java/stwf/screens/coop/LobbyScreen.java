@@ -65,7 +65,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
                 onPlayerReadyStatusUpdated(localPlayer, !localPlayer.isReady);
 
                 characterSelect.setDisabled(localPlayer.isReady);
-                multiplayerService.sendPlayerData(lobby.id, "lobby.ready", Boolean.toString(localPlayer.isReady), true);
+                multiplayerService.sendPlayerData(lobby.id, "lobby.ready", Boolean.toString(localPlayer.isReady), true, false);
             }
         });
     }
@@ -243,7 +243,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
 
         onPlayerSelectedCharacterUpdated(localPlayer, character);
 
-        multiplayerService.sendPlayerData(lobby.id, "lobby.character", character.chosenClass.toString(), true);
+        multiplayerService.sendPlayerData(lobby.id, "lobby.character", character.chosenClass.toString(), true, false);
     }
 
     @Override

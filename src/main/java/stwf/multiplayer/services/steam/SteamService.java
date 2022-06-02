@@ -199,11 +199,11 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
     @Override
     public void sendPlayerData(MultiplayerId lobbyId, String key, String value)
     {
-        sendPlayerData(lobbyId, key, value, false);
+        sendPlayerData(lobbyId, key, value, false, false);
     }
 
     @Override
-    public void sendPlayerData(MultiplayerId lobbyId, String key, String value, boolean persist)
+    public void sendPlayerData(MultiplayerId lobbyId, String key, String value, boolean persist, boolean sendLocal)
     {
         if (persist)
         {
@@ -211,6 +211,11 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
         }
 
         networkingCallback.sendPlayerData(key, value);
+
+        if (sendLocal)
+        {
+            onPlayerDataReceived(getLocalPlayerId(), key, value);
+        }
     }
 
     @Override

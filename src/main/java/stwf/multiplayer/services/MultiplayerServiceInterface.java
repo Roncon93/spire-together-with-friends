@@ -39,7 +39,7 @@ public interface MultiplayerServiceInterface
 
     void sendPlayerData(MultiplayerId lobbyId, String key, String value);
 
-    void sendPlayerData(MultiplayerId lobbyId, String key, String value, boolean persist);
+    void sendPlayerData(MultiplayerId lobbyId, String key, String value, boolean persist, boolean sendLocal);
 
     void sendHostPlayerData(MultiplayerId lobbyId, String key, String value);
 

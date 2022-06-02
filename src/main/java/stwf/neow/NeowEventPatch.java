@@ -14,10 +14,8 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
-import com.megacrit.cardcrawl.cards.green.Flechettes;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.events.AbstractEvent;
-import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.neow.NeowReward;
 
@@ -102,10 +100,6 @@ public class NeowEventPatch
             {
                 AbstractPlayerPatch.initializeLocalPlayer();
                 MultiplayerManager.addLobbyCallback(CALLBACK, "event.neow.talked", "event.neow.mini-blessing", "event.neow.blessing");
-
-                AbstractDungeon.player.masterDeck.addToTop(CardLibrary.getCard(Flechettes.ID).makeCopy());
-                AbstractDungeon.player.masterDeck.addToTop(CardLibrary.getCard(Flechettes.ID).makeCopy());
-                AbstractDungeon.player.masterDeck.addToTop(CardLibrary.getCard(Flechettes.ID).makeCopy());
             }
         }
     }

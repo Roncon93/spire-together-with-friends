@@ -67,11 +67,11 @@ public class MultiplayerManager
         }
     }
 
-    public static void sendPlayerData(String key, String value, boolean persist)
+    public static void sendPlayerData(String key, String value, boolean persist, boolean sendLocal)
     {
         if (multiplayerService != null)
         {
-            multiplayerService.sendPlayerData(lobby.id, key, value, persist);
+            multiplayerService.sendPlayerData(lobby.id, key, value, persist, sendLocal);
         }
     }
 

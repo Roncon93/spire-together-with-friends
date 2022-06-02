@@ -69,7 +69,6 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
             {
                 e.printStackTrace();
             }
-            
         }
     }
 
@@ -130,13 +129,11 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
                 System.out.println("Sent message: " + messageAsJson + " with result " + sent);
             }
         }
-        catch (Exception e1)
+        catch (Exception e)
         {
-            e1.printStackTrace();
+            e.printStackTrace();
         }
     }
-
-    
 
     public static class SteamNetworkingMessage
     {

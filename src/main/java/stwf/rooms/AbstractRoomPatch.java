@@ -20,6 +20,47 @@ import stwf.multiplayer.Player;
 
 public class AbstractRoomPatch
 {
+    public static boolean endOfTurnMessageSent = false;
+    public static boolean enableEndTurn = false;
+
+    @SpirePatch2(clz = AbstractRoom.class, method = "endTurn")
+    public static class EndTurnPatch
+    {
+        @SpireInsertPatch(loc = 521)
+        public static SpireReturn<Void> Insert()
+        {
+            if (!MultiplayerManager.inMultiplayerLobby() || enableEndTurn)
+            {
+                enableEndTurn = false;
+                endOfTurnMessageSent = false;
+                return SpireReturn.Continue();
+            }
+
+            if (!endOfTurnMessageSent)
+            {
+                MultiplayerManager.sendPlayerData("player.ended-turn", "", false, true);
+                endOfTurnMessageSent = true;
+            }
+
+            return SpireReturn.Return();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractRoom.class, method = "endTurn")
+    public static class EndTurnPatch2
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix()
+        {
+            if (!MultiplayerManager.inMultiplayerLobby() || !endOfTurnMessageSent || enableEndTurn)
+            {
+                return SpireReturn.Continue();
+            }
+
+            return SpireReturn.Return();
+        }
+    }
+
     @SpirePatch2(clz = AbstractRoom.class, method = "update")
     public static class UpdatePatch
     {
