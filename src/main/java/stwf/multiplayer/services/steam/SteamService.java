@@ -154,6 +154,7 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
             String memberUsername = friendsService.getFriendPersonaName(memberId);
 
             Player player = new Player();
+            player.order = index;
             player.isLocal = memberId.equals(localSteamUser.getSteamID());
             player.profile.id = SteamServiceUtils.convertSteamIdToGenericId(memberId);
             player.profile.username = memberUsername;

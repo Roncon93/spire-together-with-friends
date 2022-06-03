@@ -24,6 +24,7 @@ public class AbstractPlayerPatch
     public static boolean enableShowHealthBar = false;
     public static boolean enableLoseBlock = false;
     public static boolean enableDamage = false;
+    public static boolean enableApplyStartOfCombatPreDrawLogic = false;
 
     private static final float[][] POSITIONS =
     {
@@ -85,6 +86,21 @@ public class AbstractPlayerPatch
                 float y = __instance.hb.y + __instance.hb.height;
                 
                 FontHelper.renderFontCentered(___sb, FontHelper.tipHeaderFont, playerData.profile.username, x, y, Settings.CREAM_COLOR);
+            }
+
+            return SpireReturn.Continue();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractPlayer.class, method = "applyStartOfCombatPreDrawLogic")
+    public static class ApplyStartOfCombatPreDrawLogicPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix()
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && !enableApplyStartOfCombatPreDrawLogic)
+            {
+                return SpireReturn.Return();
             }
 
             return SpireReturn.Continue();

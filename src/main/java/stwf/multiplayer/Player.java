@@ -8,6 +8,7 @@ public class Player
     public AbstractPlayer character;
     public boolean isLocal;
     public boolean endedTurn;
+    public int order;
 
     public Player()
     {

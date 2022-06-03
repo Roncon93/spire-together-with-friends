@@ -10,7 +10,6 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
-import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 
 import stwf.map.MapRoomNodePatch;
@@ -86,7 +85,6 @@ public class AbstractDungeonPatch
                     }
 
                     AbstractRoomPatch.enableEndTurn = true;
-                    AbstractRoom.waitTimer = 0.1f;
                 }
             }
         }

@@ -26,6 +26,7 @@ import com.megacrit.cardcrawl.powers.WeakPower;
 
 import stwf.actions.AbstractGameActionPatch.AbstractGameActionFieldsPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
+import stwf.monsters.MonsterGroupPatch;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
 import stwf.multiplayer.services.callbacks.MultiplayerServiceLobbyCallback;
@@ -35,6 +36,8 @@ public class GameActionManagerPatch
 {
     private static final Json JSON = new Json();
 
+    public static boolean enableAddToBottom = true;
+    public static boolean enableAddToTop = true;
     public static boolean skipMessage = false;
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
@@ -305,12 +308,64 @@ public class GameActionManagerPatch
         return SpireReturn.Continue();
     }
 
+    public static boolean isLocalPlayerTurn()
+    {
+        Player localPlayer = MultiplayerManager.getLocalPlayer();
+        Iterator<Player> players = MultiplayerManager.getPlayers();
+
+        if (localPlayer.order == 0)
+        {
+            return true;
+        }
+
+        while (players.hasNext())
+        {
+            Player player = players.next();
+
+            if (player.order == localPlayer.order - 1)
+            {
+                return player.endedTurn;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean showIntent = true;
+
+    @SpirePatch2(clz = GameActionManager.class, method = "getNextAction")
+    public static class GetNextActionPatch2
+    {
+        @SpireInsertPatch(loc = 433)
+        public static SpireReturn<Void> Insert(GameActionManager __instance)
+        {
+            if (isLocalPlayerTurn())
+            {
+                showIntent = true;
+                MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
+                return SpireReturn.Continue();
+            }
+
+            if (showIntent)
+            {
+                showIntent = false;
+                AbstractDungeon.getMonsters().showIntent();
+            }
+            return SpireReturn.Return();
+        }
+    }
+
     @SpirePatch2(clz = GameActionManager.class, method = "addToTop")
     public static class AddToTopPatch
     {
         @SpireInsertPatch
         public static SpireReturn<Void> Prefix(AbstractGameAction action)
         {
+            if (MultiplayerManager.inMultiplayerLobby() && !enableAddToTop)
+            {
+                return SpireReturn.Return();
+            }
+
             return addToTopOrBottomPatch(action, false);
         }
     }
@@ -321,6 +376,11 @@ public class GameActionManagerPatch
         @SpireInsertPatch
         public static SpireReturn<Void> Prefix(AbstractGameAction action)
         {
+            if (MultiplayerManager.inMultiplayerLobby() && !enableAddToBottom)
+            {
+                return SpireReturn.Return();
+            }
+
             return addToTopOrBottomPatch(action, true);
         }
     }

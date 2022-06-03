@@ -11,9 +11,11 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 
 import javassist.CtBehavior;
+import stwf.actions.GameActionManagerPatch;
 import stwf.characters.AbstractPlayerPatch;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
@@ -22,6 +24,56 @@ public class AbstractRoomPatch
 {
     public static boolean endOfTurnMessageSent = false;
     public static boolean enableEndTurn = false;
+    public static boolean enableBattleStart = false;
+    public static boolean showInitialBattleStartUI = true;
+
+    @SpirePatch2(clz = AbstractRoom.class, method = "update")
+    public static class UpdatePatch2
+    {
+        @SpireInsertPatch(loc = 295)
+        public static SpireReturn<Void> Insert()
+        {
+            if (!showInitialBattleStartUI)
+            {
+                AbstractDungeon.isScreenUp = false;
+                GameActionManagerPatch.enableAddToBottom = true;
+                AbstractDungeon.actionManager.turnHasEnded = false;
+            }
+            else
+            {
+                AbstractPlayerPatch.enableApplyStartOfCombatPreDrawLogic = false;
+                AbstractDungeon.actionManager.turnHasEnded = false;
+                showInitialBattleStartUI = false;
+            }
+
+            if (GameActionManagerPatch.isLocalPlayerTurn())
+            {
+                AbstractDungeon.isScreenUp = false;
+                showInitialBattleStartUI = true;
+                GameActionManagerPatch.enableAddToBottom = true;
+                AbstractPlayerPatch.enableApplyStartOfCombatPreDrawLogic = true;
+                return SpireReturn.Continue();
+            }
+
+            AbstractDungeon.overlayMenu.showCombatPanels();
+            AbstractRoom.waitTimer = 0.1f;
+            return SpireReturn.Return();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractRoom.class, method = "update")
+    public static class UpdatePatch3
+    {
+        @SpireInsertPatch(loc = 289)
+        public static void Insert()
+        {
+            if (!showInitialBattleStartUI)
+            {
+                AbstractDungeon.isScreenUp = true;
+                GameActionManagerPatch.enableAddToBottom = false;
+            }
+        }
+    }
 
     @SpirePatch2(clz = AbstractRoom.class, method = "endTurn")
     public static class EndTurnPatch
