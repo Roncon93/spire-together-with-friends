@@ -33,6 +33,11 @@ public class AbstractRoomPatch
         @SpireInsertPatch(loc = 295)
         public static SpireReturn<Void> Insert()
         {
+            if (!MultiplayerManager.inMultiplayerLobby())
+            {
+                return SpireReturn.Continue();
+            }
+
             if (!showInitialBattleStartUI)
             {
                 AbstractDungeon.isScreenUp = false;
@@ -67,7 +72,7 @@ public class AbstractRoomPatch
         @SpireInsertPatch(loc = 289)
         public static void Insert()
         {
-            if (!showInitialBattleStartUI)
+            if (MultiplayerManager.inMultiplayerLobby() && !showInitialBattleStartUI)
             {
                 AbstractDungeon.isScreenUp = true;
                 GameActionManagerPatch.enableAddToBottom = false;

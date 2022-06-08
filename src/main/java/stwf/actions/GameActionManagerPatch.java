@@ -39,6 +39,7 @@ public class GameActionManagerPatch
     public static boolean enableAddToBottom = true;
     public static boolean enableAddToTop = true;
     public static boolean skipMessage = false;
+    private static boolean showIntent = true;
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
     {
@@ -331,14 +332,17 @@ public class GameActionManagerPatch
         return false;
     }
 
-    private static boolean showIntent = true;
-
     @SpirePatch2(clz = GameActionManager.class, method = "getNextAction")
     public static class GetNextActionPatch2
     {
         @SpireInsertPatch(loc = 433)
         public static SpireReturn<Void> Insert(GameActionManager __instance)
         {
+            if (!MultiplayerManager.inMultiplayerLobby())
+            {
+                return SpireReturn.Continue();
+            }
+
             if (isLocalPlayerTurn())
             {
                 showIntent = true;
@@ -351,6 +355,7 @@ public class GameActionManagerPatch
                 showIntent = false;
                 AbstractDungeon.getMonsters().showIntent();
             }
+
             return SpireReturn.Return();
         }
     }

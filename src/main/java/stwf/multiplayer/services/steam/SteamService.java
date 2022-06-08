@@ -127,7 +127,7 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
     public void leaveLobby(MultiplayerId id)
     {
         matchmakingService.leaveLobby(SteamServiceUtils.convertGenericIdToSteamId(id));
-        remotePlayerIds.clear();
+        removeAllRemotePlayers();
     }
 
     @Override
@@ -400,6 +400,16 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
     {
         remotePlayerIds.remove(playerId);
         networkingService.closeP2PSessionWithUser(playerId);
+    }
+
+    public void removeAllRemotePlayers()
+    {
+        for (SteamID playerId : remotePlayerIds)
+        {
+            networkingService.closeP2PSessionWithUser(playerId);
+        }
+
+        remotePlayerIds.clear();
     }
 
     @Override

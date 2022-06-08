@@ -19,6 +19,16 @@ public class MultiplayerManager
         MultiplayerManager.multiplayerService = multiplayerService;
     }
 
+    public static void leaveLobby()
+    {
+        if (multiplayerService == null || lobby == null)
+        {
+            return;
+        }
+
+        multiplayerService.leaveLobby(lobby.id);
+    }
+
     public static void addLobbyCallback(MultiplayerServiceLobbyCallback callback)
     {
         if (multiplayerService != null)
