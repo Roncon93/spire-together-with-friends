@@ -110,6 +110,15 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     @Override
     public void onLobbyChatUpdate(SteamID lobbyId, SteamID playerId, SteamID hostId, ChatMemberStateChange state)
     {
+        if (state == ChatMemberStateChange.Entered)
+        {
+            steamServiceCallback.addRemotePlayerId(playerId);
+        }
+        else
+        {
+            steamServiceCallback.removeRemotePlayerId(playerId);
+        }
+
         if (lobbyCallbacks != null)
         {
             MultiplayerId genericLobbyId = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
@@ -119,12 +128,10 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
             {
                 if (state == ChatMemberStateChange.Entered)
                 {
-                    steamServiceCallback.addRemotePlayerId(playerId);
                     callback.onPlayerJoined(genericLobbyId, genericPlayerId);
                 }
                 else
                 {
-                    steamServiceCallback.removeRemotePlayerId(playerId);
                     callback.onPlayerLeft(genericLobbyId, genericPlayerId);
                 }
             }
@@ -148,50 +155,6 @@ public class SteamServiceMatchmakingCallback implements SteamMatchmakingCallback
     @Override
     public void onLobbyDataUpdate(SteamID lobbyId, SteamID playerId, boolean success)
     {
-        // MultiplayerId genericLobbyId = SteamServiceUtils.convertSteamIdToGenericId(lobbyId);
-        // MultiplayerId genericPlayerId = SteamServiceUtils.convertSteamIdToGenericId(playerId);
-
-        // for (String key : readMessages.keySet())
-        // {
-        //     String rawMessage;
-
-        //     if (!lobbyId.equals(playerId))
-        //     {
-        //         rawMessage = matchmakingService.getLobbyMemberData(lobbyId, playerId, key);
-        //     }
-        //     else
-        //     {
-        //         rawMessage = matchmakingService.getLobbyData(lobbyId, key);
-        //     }
-
-        //     if (StringUtils.isNullOrEmpty(rawMessage))
-        //     {
-        //         continue;
-        //     }
-
-        //     SteamMessage message = new Json().fromJson(SteamMessage.class, rawMessage);
-
-        //     String playerKey = playerId.toString() + "." + key;
-
-        //     if (readMessages.containsKey(playerKey) && readMessages.get(playerKey).equals(message.id))
-        //     {
-        //         continue;
-        //     }
-
-        //     readMessages.put(playerKey, message.id);
-
-        //     for (MultiplayerServiceLobbyCallback callback : lobbyCallbacks)
-        //     {
-        //         if (!lobbyId.equals(playerId))
-        //         {
-        //             callback.onPlayerDataReceived(genericPlayerId, key, message.value);
-        //         }
-        //         else
-        //         {
-        //             callback.onLobbyDataReceived(genericLobbyId, key, message.value);
-        //         }
-        //     }
-        // }
     }
 
     @Override
