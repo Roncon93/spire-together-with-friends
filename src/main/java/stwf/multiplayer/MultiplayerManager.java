@@ -59,19 +59,19 @@ public class MultiplayerManager
         {
             multiplayerService.sendLobbyData(lobby.id, key, value);
         }
-    }
+    }    
 
-    public static void sendPlayerData(String key, String value)
+    public static void sendHostPlayerData(String key, String value)
     {
-        if (multiplayerService != null)
+        if (multiplayerService != null && isLocalPlayerHost())
         {
             multiplayerService.sendPlayerData(lobby.id, key, value);
         }
     }
 
-    public static void sendHostPlayerData(String key, String value)
+    public static void sendPlayerData(String key, String value)
     {
-        if (multiplayerService != null && isLocalPlayerHost())
+        if (multiplayerService != null)
         {
             multiplayerService.sendPlayerData(lobby.id, key, value);
         }

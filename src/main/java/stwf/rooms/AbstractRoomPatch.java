@@ -95,8 +95,9 @@ public class AbstractRoomPatch
 
             if (!endOfTurnMessageSent)
             {
-                MultiplayerManager.sendPlayerData("player.ended-turn", "", false, true);
+                MultiplayerManager.sendPlayerData("player.turn-ended", "", false, true);
                 endOfTurnMessageSent = true;
+                AbstractPlayerPatch.enableLoseBlock = false;
             }
 
             return SpireReturn.Return();

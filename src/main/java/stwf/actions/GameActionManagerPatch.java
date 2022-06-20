@@ -25,6 +25,7 @@ import com.megacrit.cardcrawl.powers.VulnerablePower;
 import com.megacrit.cardcrawl.powers.WeakPower;
 
 import stwf.actions.AbstractGameActionPatch.AbstractGameActionFieldsPatch;
+import stwf.characters.AbstractPlayerPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
 import stwf.monsters.MonsterGroupPatch;
 import stwf.multiplayer.MultiplayerManager;
@@ -60,11 +61,20 @@ public class GameActionManagerPatch
             if (key.equals("action.damage"))
             {
                 Player player = MultiplayerManager.getPlayer(playerId);
-                player.character.useFastAttackAnimation();
 
                 DamageActionMessage message = JSON.fromJson(DamageActionMessage.class, value);
+                AbstractCreature target = null;
 
-                AbstractMonster target = AbstractDungeon.currMapNode.room.monsters.monsters.get(message.targetId);
+                if (message.isTargetPlayer)
+                {
+                    target = player.character;
+                }
+                else
+                {
+                    player.character.useFastAttackAnimation();
+                    target = AbstractDungeon.currMapNode.room.monsters.monsters.get(message.targetId);
+                }
+                
                 DamageInfo info = new DamageInfo(player.character, message.damage, message.type);
 
                 DamageAction action = new DamageAction(target, info, message.effect);
@@ -190,36 +200,19 @@ public class GameActionManagerPatch
                 Field infoField = DamageAction.class.getDeclaredField("info");
                 infoField.setAccessible(true);
                 DamageInfo info = (DamageInfo)infoField.get(damageAction);
-
-                if (damageAction.target instanceof AbstractPlayer)
-                {
-                    Iterator<Player> players = MultiplayerManager.getPlayers();
-                    while (players.hasNext())
-                    {
-                        Player player = players.next();
-
-                        if (!player.isLocal)
-                        {
-                            DamageAction newAction = new DamageAction(player.character, info);
-                            AbstractGameActionFieldsPatch.process.set(newAction, true);
-
-                            if (addToBottom)
-                            {
-                                AbstractDungeon.actionManager.addToBottom(newAction);
-                            }
-                            else
-                            {
-                                AbstractDungeon.actionManager.addToTop(newAction);
-                            }
-                        }
-                    }
-
-                    return SpireReturn.Continue();
-                }
-
                 DamageActionMessage message = new DamageActionMessage();
-                message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(damageAction.target);
-                message.damage = info.base;
+
+                if (damageAction.target == AbstractDungeon.player)
+                {
+                    message.isTargetPlayer = true;
+                }
+                else
+                {
+                    message.isTargetPlayer = false;
+                    message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(damageAction.target);
+                }
+                
+                message.damage = info.output;
                 message.type = info.type;
                 message.effect = damageAction.attackEffect;
                 message.addToBottom = addToBottom;
@@ -347,6 +340,8 @@ public class GameActionManagerPatch
             {
                 showIntent = true;
                 MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
+                AbstractPlayerPatch.enableLoseBlock = true;
+
                 return SpireReturn.Continue();
             }
 
@@ -397,6 +392,7 @@ public class GameActionManagerPatch
 
     public static class DamageActionMessage extends ActionMessage
     {
+        public Boolean isTargetPlayer;
         public Integer targetId;
         public Integer damage;
         public DamageInfo.DamageType type;

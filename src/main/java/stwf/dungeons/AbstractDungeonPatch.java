@@ -55,7 +55,7 @@ public class AbstractDungeonPatch
                 });  
             }
 
-            else if (key.equals("player.ended-turn"))
+            else if (key.equals("player.turn-ended"))
             {
                 boolean allPlayersEndedTurn = true;
 

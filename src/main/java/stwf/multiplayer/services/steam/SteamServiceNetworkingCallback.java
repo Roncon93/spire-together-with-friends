@@ -3,6 +3,9 @@ package stwf.multiplayer.services.steam;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Json;
 import com.codedisaster.steamworks.SteamException;
@@ -13,6 +16,7 @@ import com.codedisaster.steamworks.SteamNetworkingCallback;
 
 public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, Runnable
 {
+    private final static Logger LOGGER = LogManager.getLogger(SteamServiceNetworkingCallback.class);
     private final static Json JSON = new Json();
 
     public SteamServiceCallbackInterface steamServiceCallback;
@@ -39,7 +43,7 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
             }
         }
 
-        System.out.println("Thread has exited");
+        LOGGER.info("Thread has exited");
     };
 
     private void readIncomingMessage()
@@ -52,7 +56,7 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
         int[] messageSize = { 0 };
         while (SteamService.networkingService.isP2PPacketAvailable(0, messageSize))
         {
-            System.out.println("message with " + messageSize[0] + " bytes of size received");
+            // LOGGER.info("message with " + messageSize[0] + " bytes of size received");
 
             ByteBuffer buffer = ByteBuffer.allocateDirect(messageSize[0]);
             try
@@ -62,7 +66,11 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
                 byte[] bytes = new byte[messageSize[0]];
                 buffer.get(bytes);
                 
-                SteamNetworkingMessage message = JSON.fromJson(SteamNetworkingMessage.class, new String(bytes));
+                String rawMessage = new String(bytes);
+
+                SteamNetworkingMessage message = JSON.fromJson(SteamNetworkingMessage.class, rawMessage);
+                LOGGER.info("Received message: " + rawMessage);
+
                 steamServiceCallback.onPlayerDataReceived(senderId, message.key, message.value);
             }
             catch (Exception e)
@@ -126,7 +134,7 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
                 SteamID playerId = playerIds.next();
                 messageData.position(0);
                 boolean sent = SteamService.networkingService.sendP2PPacket(playerId, messageData, P2PSend.Reliable, 0);
-                System.out.println("Sent message: " + messageAsJson + " with result " + sent);
+                LOGGER.info("Sent message: " + messageAsJson + " with result " + sent);
             }
         }
         catch (Exception e)

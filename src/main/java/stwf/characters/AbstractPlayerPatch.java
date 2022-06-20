@@ -165,7 +165,7 @@ public class AbstractPlayerPatch
         @SpireInsertPatch
         public static void Prefix(AbstractCreature __instance, int amount, boolean noAnimation)
         {
-            if (MultiplayerManager.inMultiplayerLobby() && __instance == AbstractDungeon.player)
+            if (MultiplayerManager.inMultiplayerLobby() && __instance == AbstractDungeon.player && enableLoseBlock)
             {
                 LoseBlockMessage message = new LoseBlockMessage(amount, noAnimation);             
                 MultiplayerManager.sendPlayerData("player.lose-block", new Json().toJson(message));
