@@ -1,6 +1,5 @@
 package stwf.actions;
 
-import java.lang.reflect.Field;
 import java.util.Iterator;
 
 import com.badlogic.gdx.Gdx;
@@ -11,20 +10,14 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
-import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
-import com.megacrit.cardcrawl.actions.common.DamageAction;
-import com.megacrit.cardcrawl.actions.common.GainBlockAction;
-import com.megacrit.cardcrawl.cards.DamageInfo;
-import com.megacrit.cardcrawl.characters.AbstractPlayer;
-import com.megacrit.cardcrawl.core.AbstractCreature;
+import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.CardQueueItem;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
-import com.megacrit.cardcrawl.powers.AbstractPower;
-import com.megacrit.cardcrawl.powers.PoisonPower;
-import com.megacrit.cardcrawl.powers.VulnerablePower;
-import com.megacrit.cardcrawl.powers.WeakPower;
 
 import stwf.actions.AbstractGameActionPatch.AbstractGameActionFieldsPatch;
+import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
 import stwf.monsters.MonsterGroupPatch;
@@ -58,77 +51,31 @@ public class GameActionManagerPatch
                 return;
             }
 
-            if (key.equals("action.damage"))
+            if (key.equals("action.use-card"))
             {
                 Player player = MultiplayerManager.getPlayer(playerId);
 
-                DamageActionMessage message = JSON.fromJson(DamageActionMessage.class, value);
-                AbstractCreature target = null;
+                UseCardActionMessage message = JSON.fromJson(UseCardActionMessage.class, value);
 
-                if (message.isTargetPlayer)
+                AbstractMonster target = null;
+
+                if (!message.isTargetPlayer && message.monsterId != -1)
                 {
-                    target = player.character;
+                    target = AbstractDungeon.currMapNode.room.monsters.monsters.get(message.monsterId);
                 }
-                else
-                {
-                    player.character.useFastAttackAnimation();
-                    target = AbstractDungeon.currMapNode.room.monsters.monsters.get(message.targetId);
-                }
+
+                AbstractCard card = CardLibrary.getCopy(message.cardId);
+                card.costForTurn = 0;
                 
-                DamageInfo info = new DamageInfo(player.character, message.damage, message.type);
+                AbstractCardFields.playerData.set(card, player);
 
-                DamageAction action = new DamageAction(target, info, message.effect);
-
-                addAction(action, message.addToBottom);
+                player.character.useCard(card, target, 0);
             }
 
-            else if (key.equals("action.block"))
+            else if (key.equals("player.round-started"))
             {
-                Player player = MultiplayerManager.getPlayer(playerId);
-                GainBlockActionMessage message = JSON.fromJson(GainBlockActionMessage.class, value);
-
-                GainBlockAction action = new GainBlockAction(player.character, message.amount);
-
-                addAction(action, message.addToBottom);
-            }
-
-            else if (key.equals("action.apply-power"))
-            {
-                Player player = MultiplayerManager.getPlayer(playerId);
-
-                ApplyPowerActionMessage message = JSON.fromJson(ApplyPowerActionMessage.class, value);
-
-                AbstractCreature target;
-                if (message.isTargetMonster)
-                {
-                    target = AbstractDungeon.currMapNode.room.monsters.monsters.get(Integer.parseInt(message.targetId));
-                }
-                else
-                {
-                    target = player.character;
-                }                    
-
-                AbstractPower power = null;
-
-                if (message.powerId.equals(VulnerablePower.POWER_ID))
-                {
-                    power = new VulnerablePower(target, message.magicNumber, false);
-                }
-                else if (message.powerId.equals(WeakPower.POWER_ID))
-                {
-                    power = new WeakPower(target, message.magicNumber, false);
-                }
-                else if (message.powerId.equals(PoisonPower.POWER_ID))
-                {
-                    power = new PoisonPower(target, player.character, message.magicNumber);
-                }
-
-                if (power != null)
-                {
-                    ApplyPowerAction action = new ApplyPowerAction(target, player.character, power);
-
-                    addAction(action, message.addToBottom);
-                }
+                MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
+                AbstractDungeon.getCurrRoom().monsters.applyEndOfTurnPowers();
             }
 
             else if (key.equals("player.lose-block"))
@@ -159,20 +106,6 @@ public class GameActionManagerPatch
                 player.character.decreaseMaxHealth(Integer.parseInt(value));
             }
         }
-
-        private void addAction(AbstractGameAction action, boolean addToBottom)
-        {
-            skipMessage = true;
-            if (addToBottom)
-            {
-                AbstractDungeon.actionManager.addToBottom(action);
-            }
-            else
-            {
-                AbstractDungeon.actionManager.addToTop(action);
-            }
-            skipMessage = false;
-        }
     };
 
     @SpirePatch2(clz = GameActionManager.class, method = SpirePatch.CONSTRUCTOR)
@@ -190,113 +123,6 @@ public class GameActionManagerPatch
         if (skipMessage || AbstractGameActionFieldsPatch.process.get(action))
         {
             return SpireReturn.Continue();
-        }
-
-        if (action instanceof DamageAction)
-        {
-            try
-            {
-                DamageAction damageAction = (DamageAction)action;
-                Field infoField = DamageAction.class.getDeclaredField("info");
-                infoField.setAccessible(true);
-                DamageInfo info = (DamageInfo)infoField.get(damageAction);
-                DamageActionMessage message = new DamageActionMessage();
-
-                if (damageAction.target == AbstractDungeon.player)
-                {
-                    message.isTargetPlayer = true;
-                }
-                else
-                {
-                    message.isTargetPlayer = false;
-                    message.targetId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(damageAction.target);
-                }
-                
-                message.damage = info.output;
-                message.type = info.type;
-                message.effect = damageAction.attackEffect;
-                message.addToBottom = addToBottom;
-
-                MultiplayerManager.sendPlayerData("action.damage", JSON.toJson(message));
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        else if (action instanceof GainBlockAction)
-        {
-            GainBlockAction gainBlockAction = (GainBlockAction)action;
-
-            if (gainBlockAction.target instanceof AbstractMonster)
-            {
-                return SpireReturn.Continue();
-            }
-
-            GainBlockActionMessage message = new GainBlockActionMessage();
-            message.addToBottom = addToBottom;
-            message.amount = gainBlockAction.amount;
-
-            MultiplayerManager.sendPlayerData("action.block", JSON.toJson(message));
-        }
-
-        else if (action instanceof ApplyPowerAction)
-        {
-            try
-            {
-                ApplyPowerAction applyPowerAction = (ApplyPowerAction)action;
-                Field powerToApplyField = ApplyPowerAction.class.getDeclaredField("powerToApply");
-                powerToApplyField.setAccessible(true);
-                AbstractPower powerToApply = (AbstractPower)powerToApplyField.get(applyPowerAction);
-
-                if (applyPowerAction.source instanceof AbstractMonster && applyPowerAction.target instanceof AbstractPlayer)
-                {
-                    Iterator<Player> players = MultiplayerManager.getPlayers();
-                    while (players.hasNext())
-                    {
-                        Player player = players.next();
-
-                        if (!player.isLocal)
-                        {
-                            ApplyPowerAction newAction = new ApplyPowerAction(player.character, applyPowerAction.source, powerToApply, applyPowerAction.amount, false, applyPowerAction.attackEffect);
-                            AbstractGameActionFieldsPatch.process.set(newAction, true);
-
-                            if (addToBottom)
-                            {
-                                AbstractDungeon.actionManager.addToBottom(newAction);
-                            }
-                            else
-                            {
-                                AbstractDungeon.actionManager.addToTop(newAction);
-                            }
-                        }
-                    }
-
-                    return SpireReturn.Continue();
-                }
-
-                ApplyPowerActionMessage message = new ApplyPowerActionMessage();                
-                message.powerId = powerToApply.ID;
-                message.magicNumber = powerToApply.amount;
-                message.addToBottom = addToBottom;
-
-                if (applyPowerAction.target.isPlayer)
-                {
-                    message.isTargetMonster = false;
-                }
-                else
-                {
-                    message.isTargetMonster = true;
-                    message.targetId = Integer.toString(AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(applyPowerAction.target));
-                }
-
-                MultiplayerManager.sendPlayerData("action.apply-power", JSON.toJson(message));
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
         }
 
         return SpireReturn.Continue();
@@ -325,10 +151,39 @@ public class GameActionManagerPatch
         return false;
     }
 
+    public static boolean isLocalPlayerFirst()
+    {
+        return MultiplayerManager.getLocalPlayer().order == 0;
+    }
+
+    @SpirePatch2(clz = GameActionManager.class, method = "getNextAction")
+    public static class GetNextActionPatch
+    {
+        @SpireInsertPatch(loc = 359)
+        public static SpireReturn<Void> Insert(GameActionManager __instance)
+        {
+            if (!MultiplayerManager.inMultiplayerLobby())
+            {
+                return SpireReturn.Continue();
+            }
+
+            CardQueueItem cardQueueItem = AbstractDungeon.actionManager.cardQueue.get(0);
+
+            UseCardActionMessage message = new UseCardActionMessage();
+            message.cardId = cardQueueItem.card.cardID;
+            message.isTargetPlayer = false;
+            message.monsterId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(cardQueueItem.monster);
+
+            MultiplayerManager.sendPlayerData("action.use-card", JSON.toJson(message));
+
+            return SpireReturn.Continue();
+        }
+    }
+
     @SpirePatch2(clz = GameActionManager.class, method = "getNextAction")
     public static class GetNextActionPatch2
     {
-        @SpireInsertPatch(loc = 433)
+        @SpireInsertPatch(loc = 430)
         public static SpireReturn<Void> Insert(GameActionManager __instance)
         {
             if (!MultiplayerManager.inMultiplayerLobby())
@@ -339,8 +194,13 @@ public class GameActionManagerPatch
             if (isLocalPlayerTurn())
             {
                 showIntent = true;
-                MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
                 AbstractPlayerPatch.enableLoseBlock = true;
+
+                if (isLocalPlayerFirst())
+                {
+                    MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
+                    MultiplayerManager.sendPlayerData("player.round-started", "");
+                }
 
                 return SpireReturn.Continue();
             }
@@ -390,25 +250,11 @@ public class GameActionManagerPatch
         public Boolean addToBottom = true;
     }
 
-    public static class DamageActionMessage extends ActionMessage
+    public static class UseCardActionMessage extends ActionMessage
     {
+        public String cardId;
         public Boolean isTargetPlayer;
-        public Integer targetId;
-        public Integer damage;
-        public DamageInfo.DamageType type;
-        public AbstractGameAction.AttackEffect effect;
-    }
-
-    public static class ApplyPowerActionMessage extends ActionMessage
-    {
-        public boolean isTargetMonster;
-        public String targetId;
-        public String powerId;
-        public Integer magicNumber;
-    }
-
-    public static class GainBlockActionMessage extends ActionMessage
-    {
-        public Integer amount;
+        public Integer monsterId;
+        public MultiplayerId playerId;
     }
 }

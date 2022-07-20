@@ -129,12 +129,14 @@ public class SteamServiceNetworkingCallback implements SteamNetworkingCallback, 
         
         try
         {
+            LOGGER.info("Sending message: " + messageAsJson);
+
             for (Iterator<SteamID> playerIds = steamServiceCallback.getRemotePlayerIds(); playerIds.hasNext();)
             {
                 SteamID playerId = playerIds.next();
                 messageData.position(0);
                 boolean sent = SteamService.networkingService.sendP2PPacket(playerId, messageData, P2PSend.Reliable, 0);
-                LOGGER.info("Sent message: " + messageAsJson + " with result " + sent);
+                LOGGER.info("Sent message with result: " + sent);
             }
         }
         catch (Exception e)

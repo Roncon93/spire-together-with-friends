@@ -5,6 +5,8 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.monsters.MonsterGroup;
 
+import stwf.multiplayer.MultiplayerManager;
+
 public class MonsterGroupPatch
 {
     public static boolean enableApplyEndOfTurnPowers = false;
@@ -15,7 +17,7 @@ public class MonsterGroupPatch
         @SpireInsertPatch
         public static SpireReturn<Void> Prefix()
         {
-            if (enableApplyEndOfTurnPowers)
+            if (!MultiplayerManager.inMultiplayerLobby() || enableApplyEndOfTurnPowers)
             {
                 enableApplyEndOfTurnPowers = false;
                 return SpireReturn.Continue();
