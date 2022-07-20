@@ -30,7 +30,7 @@ public class AbstractRoomPatch
     @SpirePatch2(clz = AbstractRoom.class, method = "update")
     public static class UpdatePatch2
     {
-        @SpireInsertPatch(loc = 295)
+        @SpireInsertPatch(loc = 293)
         public static SpireReturn<Void> Insert()
         {
             if (!MultiplayerManager.inMultiplayerLobby())
