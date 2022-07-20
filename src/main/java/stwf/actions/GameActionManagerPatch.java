@@ -63,7 +63,11 @@ public class GameActionManagerPatch
                 }
 
                 AbstractCard card = CardLibrary.getCopy(message.cardId);
-                card.costForTurn = 0;
+                if (message.isUpgraded)
+                {
+                    card.upgrade();
+                }
+                card.costForTurn = 0;                
                 
                 AbstractCardFields.playerData.set(card, player);
 
@@ -163,6 +167,7 @@ public class GameActionManagerPatch
 
             UseCardActionMessage message = new UseCardActionMessage();
             message.cardId = cardQueueItem.card.cardID;
+            message.isUpgraded = cardQueueItem.card.upgraded;
             message.isTargetPlayer = false;
             message.monsterId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(cardQueueItem.monster);
 
@@ -215,6 +220,7 @@ public class GameActionManagerPatch
     public static class UseCardActionMessage extends ActionMessage
     {
         public String cardId;
+        public Boolean isUpgraded;
         public Boolean isTargetPlayer;
         public Integer monsterId;
         public MultiplayerId playerId;
