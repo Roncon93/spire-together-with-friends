@@ -8,7 +8,6 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
-import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
@@ -17,7 +16,6 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 
-import stwf.actions.AbstractGameActionPatch.AbstractGameActionFieldsPatch;
 import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
@@ -33,7 +31,6 @@ public class GameActionManagerPatch
 
     public static boolean enableAddToBottom = true;
     public static boolean enableAddToTop = true;
-    public static boolean skipMessage = false;
     private static boolean showIntent = true;
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
@@ -123,16 +120,6 @@ public class GameActionManagerPatch
         }
     }
 
-    private static SpireReturn<Void> addToTopOrBottomPatch(AbstractGameAction action, boolean addToBottom)
-    {
-        if (skipMessage || AbstractGameActionFieldsPatch.process.get(action))
-        {
-            return SpireReturn.Continue();
-        }
-
-        return SpireReturn.Continue();
-    }
-
     public static boolean isLocalPlayerTurn()
     {
         Player localPlayer = MultiplayerManager.getLocalPlayer();
@@ -217,36 +204,6 @@ public class GameActionManagerPatch
             }
 
             return SpireReturn.Return();
-        }
-    }
-
-    @SpirePatch2(clz = GameActionManager.class, method = "addToTop")
-    public static class AddToTopPatch
-    {
-        @SpireInsertPatch
-        public static SpireReturn<Void> Prefix(AbstractGameAction action)
-        {
-            if (MultiplayerManager.inMultiplayerLobby() && !enableAddToTop)
-            {
-                return SpireReturn.Return();
-            }
-
-            return addToTopOrBottomPatch(action, false);
-        }
-    }
-
-    @SpirePatch2(clz = GameActionManager.class, method = "addToBottom")
-    public static class AddToBottomPatch
-    {
-        @SpireInsertPatch
-        public static SpireReturn<Void> Prefix(AbstractGameAction action)
-        {
-            if (MultiplayerManager.inMultiplayerLobby() && !enableAddToBottom)
-            {
-                return SpireReturn.Return();
-            }
-
-            return addToTopOrBottomPatch(action, true);
         }
     }
 
