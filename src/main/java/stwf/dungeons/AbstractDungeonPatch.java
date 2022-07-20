@@ -12,6 +12,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 
+import stwf.characters.AbstractPlayerPatch;
 import stwf.map.MapRoomNodePatch;
 import stwf.map.MapRoomNodePatch.RoomSelectedMessage;
 import stwf.multiplayer.MultiplayerManager;
@@ -66,6 +67,12 @@ public class AbstractDungeonPatch
 
                     if (player.profile.id.equals(playerId))
                     {
+                        if (!player.isLocal)
+                        {
+                            AbstractPlayerPatch.enableApplyEndOfTurnTriggers = true;
+                            player.character.applyEndOfTurnTriggers();
+                        }
+                        
                         player.endedTurn = true;
                     }
 

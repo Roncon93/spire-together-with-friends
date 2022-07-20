@@ -90,6 +90,7 @@ public class AbstractRoomPatch
             {
                 enableEndTurn = false;
                 endOfTurnMessageSent = false;
+                AbstractPlayerPatch.enableApplyEndOfTurnTriggers = true;
                 return SpireReturn.Continue();
             }
 
@@ -98,6 +99,7 @@ public class AbstractRoomPatch
                 MultiplayerManager.sendPlayerData("player.turn-ended", "", false, true);
                 endOfTurnMessageSent = true;
                 AbstractPlayerPatch.enableLoseBlock = false;
+                AbstractPlayerPatch.enableApplyEndOfTurnTriggers = false;
             }
 
             return SpireReturn.Return();

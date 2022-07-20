@@ -12,6 +12,7 @@ import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
+import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
@@ -69,7 +70,11 @@ public class GameActionManagerPatch
                 
                 AbstractCardFields.playerData.set(card, player);
 
+                AbstractPlayer localCharacter = AbstractDungeon.player;
+
+                AbstractDungeon.player = player.character;
                 player.character.useCard(card, target, 0);
+                AbstractDungeon.player = localCharacter;
             }
 
             else if (key.equals("player.round-started"))
