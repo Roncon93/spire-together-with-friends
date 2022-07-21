@@ -201,6 +201,7 @@ public class GameActionManagerPatch
                     MultiplayerManager.sendPlayerData("player.round-started", "");
                 }
 
+                MultiplayerManager.sendPlayerData("player.turn-started", "");
                 return SpireReturn.Continue();
             }
 

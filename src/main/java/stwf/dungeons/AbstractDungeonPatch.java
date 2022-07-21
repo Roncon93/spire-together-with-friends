@@ -56,6 +56,35 @@ public class AbstractDungeonPatch
                 });  
             }
 
+            else if (key.equals("player.turn-started"))
+            {
+                AbstractPlayer player = MultiplayerManager.getPlayer(playerId).character;
+
+                player.applyStartOfTurnRelics();
+                player.applyStartOfTurnPreDrawCards();
+                player.applyStartOfTurnCards();
+                player.applyStartOfTurnPowers();
+                player.applyStartOfTurnOrbs();
+
+                if (!player.hasPower("Barricade") && !player.hasPower("Blur"))
+                {
+                    if (!player.hasRelic("Calipers"))
+                    {
+                        player.loseBlock();
+                    }
+                    else
+                    {
+                        player.loseBlock(15);
+                    }
+                }
+
+                if (!(AbstractDungeon.getCurrRoom()).isBattleOver)
+                {
+                    player.applyStartOfTurnPostDrawRelics();
+                    player.applyStartOfTurnPostDrawPowers();
+                }
+            }
+
             else if (key.equals("player.turn-ended"))
             {
                 boolean allPlayersEndedTurn = true;
