@@ -156,12 +156,18 @@ public class AbstractDungeonPatch
             while (players.hasNext())
             {
                 Player player = players.next();
+                player.endedTurn = false;
 
                 AbstractPlayer localCharacter = AbstractDungeon.player;
                 AbstractDungeon.player = player.character;
                 AbstractDungeon.resetPlayer();
                 AbstractDungeon.player = localCharacter;
             }
+
+            AbstractRoomPatch.endOfTurnMessageSent = false;
+            AbstractRoomPatch.enableEndTurn = false;
+            AbstractRoomPatch.enableBattleStart = false;
+            AbstractRoomPatch.showInitialBattleStartUI = true;
         }
     }
 }
