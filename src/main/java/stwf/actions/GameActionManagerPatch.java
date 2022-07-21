@@ -1,5 +1,6 @@
 package stwf.actions;
 
+import java.lang.reflect.Field;
 import java.util.Iterator;
 
 import com.badlogic.gdx.Gdx;
@@ -8,13 +9,19 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
+import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
+import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
+import com.megacrit.cardcrawl.actions.common.DamageAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
+import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
+import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
+import com.megacrit.cardcrawl.powers.AbstractPower;
 
 import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
@@ -32,6 +39,7 @@ public class GameActionManagerPatch
     public static boolean enableAddToBottom = true;
     public static boolean enableAddToTop = true;
     private static boolean showIntent = true;
+    private static boolean skipActionSynchronization = false;
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
     {
@@ -213,6 +221,83 @@ public class GameActionManagerPatch
 
             return SpireReturn.Return();
         }
+    }
+
+    @SpirePatch2(clz = GameActionManager.class, method = "addToBottom")
+    public static class AddToBottomPatch
+    {
+        @SpireInsertPatch()
+        public static void Postfix(GameActionManager __instance, AbstractGameAction action)
+        {
+            if (skipActionSynchronization)
+            {
+                return;
+            }
+
+            if (!(action.source instanceof AbstractMonster) || !(action.target instanceof AbstractPlayer))
+            {
+                return;
+            }
+
+            try
+            {
+                if (action instanceof DamageAction)
+                {
+                    DamageAction damageAction = (DamageAction)action;
+
+                    Field infoField = DamageAction.class.getDeclaredField("info");
+                    infoField.setAccessible(true);
+                    DamageInfo info = (DamageInfo)infoField.get(damageAction);
+
+                    Iterator<Player> players = MultiplayerManager.getPlayers();
+                    while (players.hasNext())
+                    {
+                        Player player = players.next();
+
+                        if (!player.isLocal)
+                        {
+                            DamageAction newAction = new DamageAction(player.character, info);
+
+                            skipActionSynchronization = true;
+                            AbstractDungeon.actionManager.addToBottom(newAction);
+                            skipActionSynchronization = false;
+                        }
+                    }
+                }
+
+                if (action instanceof ApplyPowerAction)
+                {
+                    ApplyPowerAction applyPowerAction = (ApplyPowerAction)action;
+                    
+                    Field powerToApplyField = ApplyPowerAction.class.getDeclaredField("powerToApply");
+                    powerToApplyField.setAccessible(true);
+                    AbstractPower powerToApply = (AbstractPower)powerToApplyField.get(applyPowerAction);
+
+                    Field startingDurationField = ApplyPowerAction.class.getDeclaredField("startingDuration");
+                    startingDurationField.setAccessible(true);
+                    float startingDuration = (float)startingDurationField.get(applyPowerAction);
+
+                    Iterator<Player> players = MultiplayerManager.getPlayers();
+                    while (players.hasNext())
+                    {
+                        Player player = players.next();
+
+                        if (!player.isLocal)
+                        {
+                            ApplyPowerAction newAction = new ApplyPowerAction(player.character, applyPowerAction.source, powerToApply, applyPowerAction.amount, startingDuration == Settings.ACTION_DUR_FASTER, applyPowerAction.attackEffect);
+
+                            skipActionSynchronization = true;
+                            AbstractDungeon.actionManager.addToBottom(newAction);
+                            skipActionSynchronization = false;
+                        }
+                    }
+                }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
     }
 
     public static abstract class ActionMessage
