@@ -116,4 +116,23 @@ public class AbstractDungeonPatch
             MultiplayerManager.addLobbyCallback(CALLBACK);
         }
     }
+
+    @SpirePatch2(clz =  AbstractDungeon.class, method = "nextRoomTransition", paramtypez = { SaveFile.class })
+    public static class ResetPlayerPatch
+    {
+        @SpireInsertPatch(loc = 2192)
+        public static void Insert()
+        {
+            Iterator<Player> players = MultiplayerManager.getPlayers();
+            while (players.hasNext())
+            {
+                Player player = players.next();
+
+                AbstractPlayer localCharacter = AbstractDungeon.player;
+                AbstractDungeon.player = player.character;
+                AbstractDungeon.resetPlayer();
+                AbstractDungeon.player = localCharacter;
+            }
+        }
+    }
 }
