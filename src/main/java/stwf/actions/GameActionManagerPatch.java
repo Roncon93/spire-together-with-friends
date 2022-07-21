@@ -67,7 +67,8 @@ public class GameActionManagerPatch
                 {
                     card.upgrade();
                 }
-                card.costForTurn = 0;                
+                card.costForTurn = 0;
+                card.energyOnUse = message.energyOnUse;
                 
                 AbstractCardFields.playerData.set(card, player);
 
@@ -168,6 +169,7 @@ public class GameActionManagerPatch
             UseCardActionMessage message = new UseCardActionMessage();
             message.cardId = cardQueueItem.card.cardID;
             message.isUpgraded = cardQueueItem.card.upgraded;
+            message.energyOnUse = cardQueueItem.card.energyOnUse;
             message.isTargetPlayer = false;
             message.monsterId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(cardQueueItem.monster);
 
@@ -221,6 +223,7 @@ public class GameActionManagerPatch
     {
         public String cardId;
         public Boolean isUpgraded;
+        public Integer energyOnUse;
         public Boolean isTargetPlayer;
         public Integer monsterId;
         public MultiplayerId playerId;
