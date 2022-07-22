@@ -6,6 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -36,6 +39,8 @@ import stwf.multiplayer.services.callbacks.MultiplayerServiceOnLobbyJoinedCallba
 
 public class SteamService implements MultiplayerServiceInterface, SteamServiceCallbackInterface
 {
+    private final static Logger LOGGER = LogManager.getLogger(SteamService.class);
+
     private SteamMatchmaking matchmakingService;
     private SteamFriends friendsService;
     public static SteamNetworking networkingService;
@@ -215,6 +220,7 @@ public class SteamService implements MultiplayerServiceInterface, SteamServiceCa
 
         if (sendLocal)
         {
+            LOGGER.info("Received local message " + key + ": " + value);
             onPlayerDataReceived(getLocalPlayerId(), key, value);
         }
     }

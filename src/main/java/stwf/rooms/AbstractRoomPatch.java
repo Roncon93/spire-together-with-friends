@@ -100,6 +100,7 @@ public class AbstractRoomPatch
                 endOfTurnMessageSent = true;
                 AbstractPlayerPatch.enableLoseBlock = false;
                 AbstractPlayerPatch.enableApplyEndOfTurnTriggers = false;
+                GameActionManagerPatch.monsterTurnEndedMessageSent = false;
             }
 
             return SpireReturn.Return();

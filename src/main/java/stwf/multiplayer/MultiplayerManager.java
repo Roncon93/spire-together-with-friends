@@ -146,6 +146,16 @@ public class MultiplayerManager
         return lobby.players.iterator();
     }
 
+    public static int getPlayersSize()
+    {
+        if (lobby == null)
+        {
+            return 0;
+        }
+
+        return lobby.players.size();
+    }
+
     public static int getPlayerIndex(Player player)
     {
         int index = lobby.players.indexOf(player);

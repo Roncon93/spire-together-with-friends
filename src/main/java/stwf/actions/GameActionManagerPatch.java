@@ -1,6 +1,7 @@
 package stwf.actions;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import com.badlogic.gdx.Gdx;
@@ -38,8 +39,12 @@ public class GameActionManagerPatch
 
     public static boolean enableAddToBottom = true;
     public static boolean enableAddToTop = true;
+    public static boolean monsterTurnEndedMessageSent = true;
+    
     private static boolean showIntent = true;
     private static boolean skipActionSynchronization = false;
+    private static boolean receivedAllMonstersTurnEnded = false;
+    private static HashMap<MultiplayerId, Boolean> receivedMonstersTurnEnded = new HashMap<>();
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
     {
@@ -52,11 +57,6 @@ public class GameActionManagerPatch
         @Override
         public void onPlayerDataReceived(MultiplayerId playerId, String key, String value)
         {
-            if (MultiplayerManager.getPlayer(playerId).isLocal)
-            {
-                return;
-            }
-
             if (key.equals("action.use-card"))
             {
                 Player player = MultiplayerManager.getPlayer(playerId);
@@ -119,6 +119,27 @@ public class GameActionManagerPatch
             {
                 Player player = MultiplayerManager.getPlayer(playerId);
                 player.character.decreaseMaxHealth(Integer.parseInt(value));
+            }
+
+            else if (key.equals("monsters.turn-ended"))
+            {
+                Player player = MultiplayerManager.getPlayer(playerId);
+                receivedMonstersTurnEnded.put(player.profile.id, true);
+
+                if (receivedMonstersTurnEnded.size() != MultiplayerManager.getPlayersSize())
+                {
+                    return;
+                }
+
+                receivedAllMonstersTurnEnded = true;
+
+                for (MultiplayerId curentPlayerId : receivedMonstersTurnEnded.keySet())
+                {
+                    if (!receivedMonstersTurnEnded.get(curentPlayerId))
+                    {
+                        receivedAllMonstersTurnEnded = false;
+                    }
+                }
             }
         }
     };
@@ -198,8 +219,20 @@ public class GameActionManagerPatch
                 return SpireReturn.Continue();
             }
 
-            if (isLocalPlayerTurn())
+            if (!monsterTurnEndedMessageSent)
             {
+                monsterTurnEndedMessageSent = true;
+                MultiplayerManager.sendPlayerData("monsters.turn-ended", "", false, true);
+            }
+
+            if (receivedAllMonstersTurnEnded && isLocalPlayerTurn())
+            {
+                receivedAllMonstersTurnEnded = false;
+                for (MultiplayerId player : receivedMonstersTurnEnded.keySet())
+                {
+                    receivedMonstersTurnEnded.put(player, false);
+                }
+
                 showIntent = true;
                 AbstractPlayerPatch.enableLoseBlock = true;
 
