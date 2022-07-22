@@ -23,6 +23,8 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.powers.AbstractPower;
+import com.megacrit.cardcrawl.powers.FrailPower;
+import com.megacrit.cardcrawl.powers.WeakPower;
 
 import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
@@ -91,6 +93,7 @@ public class GameActionManagerPatch
             {
                 MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
                 AbstractDungeon.getCurrRoom().monsters.applyEndOfTurnPowers();
+                MonsterGroupPatch.enableApplyEndOfTurnPowers = false;
             }
 
             else if (key.equals("player.lose-block"))
@@ -238,8 +241,7 @@ public class GameActionManagerPatch
 
                 if (isLocalPlayerFirst())
                 {
-                    MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
-                    MultiplayerManager.sendPlayerData("player.round-started", "");
+                    MultiplayerManager.sendPlayerData("player.round-started", "", false, true);
                 }
 
                 MultiplayerManager.sendPlayerData("player.turn-started", "");
@@ -317,6 +319,15 @@ public class GameActionManagerPatch
 
                         if (!player.isLocal)
                         {
+                            if (powerToApply instanceof WeakPower)
+                            {
+                                powerToApply = new WeakPower(player.character, powerToApply.amount, true);
+                            }
+                            else if (powerToApply instanceof FrailPower)
+                            {
+                                powerToApply = new FrailPower(player.character, powerToApply.amount, true);
+                            }
+
                             ApplyPowerAction newAction = new ApplyPowerAction(player.character, applyPowerAction.source, powerToApply, applyPowerAction.amount, startingDuration == Settings.ACTION_DUR_FASTER, applyPowerAction.attackEffect);
 
                             skipActionSynchronization = true;
