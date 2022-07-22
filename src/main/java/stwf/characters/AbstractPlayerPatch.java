@@ -26,15 +26,16 @@ public class AbstractPlayerPatch
     public static boolean enableDamage = false;
     public static boolean enableApplyStartOfCombatPreDrawLogic = false;
     public static boolean enableApplyEndOfTurnTriggers = true;
+    public static boolean enableRender = false;
+    public static boolean enableMovePosition = false;
+
+    private static boolean skipRenderBattleUiSynchronization = false;
 
     private static final float[][] POSITIONS =
     {
         { Settings.WIDTH * 0.32F, AbstractDungeon.floorY * 1.1f },
         { Settings.WIDTH * 0.22f, AbstractDungeon.floorY * 0.8f }
     };
-
-    public static boolean enableRender = false;
-    public static boolean enableMovePosition = false;
 
     public static void initializeLocalPlayer()
     {
@@ -87,6 +88,31 @@ public class AbstractPlayerPatch
                 float y = __instance.hb.y + __instance.hb.height;
                 
                 FontHelper.renderFontCentered(___sb, FontHelper.tipHeaderFont, playerData.profile.username, x, y, Settings.CREAM_COLOR);
+            }
+
+            return SpireReturn.Continue();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractPlayer.class, method = "renderPlayerBattleUi")
+    public static class RenderPlayerBattleUiPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix(AbstractPlayer __instance, SpriteBatch sb)
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && !skipRenderBattleUiSynchronization)
+            {
+                Iterator<Player> players = MultiplayerManager.getPlayers();
+                while (players.hasNext())
+                {
+                    Player player = players.next();
+                    
+                    skipRenderBattleUiSynchronization = true;
+                    player.character.renderPlayerBattleUi(sb);
+                    skipRenderBattleUiSynchronization = false;
+                }
+
+                return SpireReturn.Return();
             }
 
             return SpireReturn.Continue();

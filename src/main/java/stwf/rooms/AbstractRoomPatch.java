@@ -157,7 +157,7 @@ public class AbstractRoomPatch
     public static class RenderPatch
     {
         @SpireInsertPatch(locator = Locator.class)
-        public static SpireReturn<Void> Postfix(AbstractRoom __instance, SpriteBatch ___sb)
+        public static void Postfix(AbstractRoom __instance, SpriteBatch sb)
         {
             if (MultiplayerManager.inMultiplayerLobby())
             {
@@ -167,12 +167,10 @@ public class AbstractRoomPatch
                 while (players.hasNext())
                 {
                     Player player = players.next();
-                    player.character.render(___sb);
+                    player.character.render(sb);
                 }
                 AbstractPlayerPatch.enableRender = false;
             }
-
-            return SpireReturn.Continue();
         }
 
         public static class Locator extends SpireInsertLocator
