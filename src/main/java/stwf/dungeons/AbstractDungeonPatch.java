@@ -10,6 +10,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
+import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 
 import stwf.characters.AbstractPlayerPatch;
@@ -59,6 +60,11 @@ public class AbstractDungeonPatch
             else if (key.equals("player.turn-started"))
             {
                 AbstractPlayer player = MultiplayerManager.getPlayer(playerId).character;
+
+                for (AbstractPower power : player.powers)
+                {
+                    power.atEndOfRound();    
+                }
 
                 player.applyStartOfTurnRelics();
                 player.applyStartOfTurnPreDrawCards();

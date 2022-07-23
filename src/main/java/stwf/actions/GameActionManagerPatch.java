@@ -1,6 +1,7 @@
 package stwf.actions;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -19,9 +20,9 @@ import com.megacrit.cardcrawl.actions.common.DrawCardAction;
 import com.megacrit.cardcrawl.actions.common.GainEnergyAction;
 import com.megacrit.cardcrawl.actions.common.MakeTempCardInDiscardAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.AbstractCard.CardType;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
 import com.megacrit.cardcrawl.cards.DamageInfo;
-import com.megacrit.cardcrawl.cards.AbstractCard.CardType;
 import com.megacrit.cardcrawl.cards.blue.Defend_Blue;
 import com.megacrit.cardcrawl.cards.green.Flechettes;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
@@ -36,7 +37,6 @@ import com.megacrit.cardcrawl.powers.WeakPower;
 import stwf.actions.unique.FlechetteActionPatch;
 import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
-import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
 import stwf.monsters.MonsterGroupPatch;
 import stwf.multiplayer.MultiplayerManager;
 import stwf.multiplayer.Player;
@@ -114,17 +114,13 @@ public class GameActionManagerPatch
 
             else if (key.equals("player.round-started"))
             {
+                ArrayList<AbstractPower> powers = AbstractDungeon.player.powers;
+
                 MonsterGroupPatch.enableApplyEndOfTurnPowers = true;
+                AbstractDungeon.player.powers = new ArrayList<>();
                 AbstractDungeon.getCurrRoom().monsters.applyEndOfTurnPowers();
+                AbstractDungeon.player.powers = powers;
                 MonsterGroupPatch.enableApplyEndOfTurnPowers = false;
-            }
-
-            else if (key.equals("player.lose-block"))
-            {
-                Player player = MultiplayerManager.getPlayer(playerId);
-                LoseBlockMessage message = JSON.fromJson(LoseBlockMessage.class, value);
-
-                player.character.loseBlock(message.amount, message.noAnimation);
             }
 
             else if (key.equals("player.increase-max-hp"))
@@ -275,6 +271,11 @@ public class GameActionManagerPatch
                 if (isLocalPlayerFirst())
                 {
                     MultiplayerManager.sendPlayerData("player.round-started", "", false, true);
+                }
+
+                for (AbstractPower power : AbstractDungeon.player.powers)
+                {
+                    power.atEndOfRound();
                 }
 
                 MultiplayerManager.sendPlayerData("player.turn-started", "");
