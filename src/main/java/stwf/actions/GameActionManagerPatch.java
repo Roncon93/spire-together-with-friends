@@ -17,6 +17,9 @@ import com.megacrit.cardcrawl.actions.common.DamageAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
 import com.megacrit.cardcrawl.cards.DamageInfo;
+import com.megacrit.cardcrawl.cards.AbstractCard.CardType;
+import com.megacrit.cardcrawl.cards.blue.Defend_Blue;
+import com.megacrit.cardcrawl.cards.green.Flechettes;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
@@ -26,6 +29,7 @@ import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.powers.FrailPower;
 import com.megacrit.cardcrawl.powers.WeakPower;
 
+import stwf.actions.green.FlechetteActionPatch;
 import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
@@ -85,6 +89,18 @@ public class GameActionManagerPatch
                 AbstractPlayer localCharacter = AbstractDungeon.player;
 
                 AbstractDungeon.player = player.character;
+
+                if (message.cardId.equals(Flechettes.ID))
+                {
+                    player.character.hand.group.clear();
+                    for (int i = 0; i < message.numberOfSkillsInHand; i++)
+                    {
+                        player.character.hand.group.add(new Defend_Blue());
+                    }
+
+                    FlechetteActionPatch.player = player.character;
+                }
+
                 player.character.useCard(card, target, 0);
                 AbstractDungeon.player = localCharacter;
             }
@@ -204,6 +220,16 @@ public class GameActionManagerPatch
             message.energyOnUse = cardQueueItem.card.energyOnUse;
             message.isTargetPlayer = false;
             message.monsterId = AbstractDungeon.currMapNode.room.monsters.monsters.indexOf(cardQueueItem.monster);
+
+            int numberOfSkillsInHand = 0;
+            for (AbstractCard card : AbstractDungeon.player.hand.group)
+            {
+                if (card.type == CardType.SKILL)
+                {
+                    numberOfSkillsInHand++;
+                }
+            }
+            message.numberOfSkillsInHand = numberOfSkillsInHand;
 
             MultiplayerManager.sendPlayerData("action.use-card", JSON.toJson(message));
 
@@ -354,6 +380,7 @@ public class GameActionManagerPatch
         public String cardId;
         public Boolean isUpgraded;
         public Integer energyOnUse;
+        public Integer numberOfSkillsInHand;
         public Boolean isTargetPlayer;
         public Integer monsterId;
         public MultiplayerId playerId;
