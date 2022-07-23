@@ -1,4 +1,4 @@
-package stwf.actions.green;
+package stwf.actions.unique;
 
 import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;

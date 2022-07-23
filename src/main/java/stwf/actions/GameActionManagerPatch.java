@@ -14,6 +14,10 @@ import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
 import com.megacrit.cardcrawl.actions.common.DamageAction;
+import com.megacrit.cardcrawl.actions.common.DiscardAction;
+import com.megacrit.cardcrawl.actions.common.DrawCardAction;
+import com.megacrit.cardcrawl.actions.common.GainEnergyAction;
+import com.megacrit.cardcrawl.actions.common.MakeTempCardInDiscardAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
 import com.megacrit.cardcrawl.cards.DamageInfo;
@@ -29,7 +33,7 @@ import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.powers.FrailPower;
 import com.megacrit.cardcrawl.powers.WeakPower;
 
-import stwf.actions.green.FlechetteActionPatch;
+import stwf.actions.unique.FlechetteActionPatch;
 import stwf.cards.AbstractCardPatch.AbstractCardFields;
 import stwf.characters.AbstractPlayerPatch;
 import stwf.characters.AbstractPlayerPatch.LoseBlockMessage;
@@ -51,6 +55,7 @@ public class GameActionManagerPatch
     private static boolean skipActionSynchronization = false;
     private static boolean receivedAllMonstersTurnEnded = false;
     private static HashMap<MultiplayerId, Boolean> receivedMonstersTurnEnded = new HashMap<>();
+    private static boolean isRemotePlayerUsingCard;
 
     private static final MultiplayerServiceLobbyCallback CALLBACK = new MultiplayerServiceLobbyCallback()
     {
@@ -101,7 +106,9 @@ public class GameActionManagerPatch
                     FlechetteActionPatch.player = player.character;
                 }
 
+                isRemotePlayerUsingCard = true;
                 player.character.useCard(card, target, 0);
+                isRemotePlayerUsingCard = false;
                 AbstractDungeon.player = localCharacter;
             }
 
@@ -288,6 +295,23 @@ public class GameActionManagerPatch
     public static class AddToBottomPatch
     {
         @SpireInsertPatch()
+        public static SpireReturn<Void> Prefix(GameActionManager __instance, AbstractGameAction action)
+        {
+            if (action instanceof MakeTempCardInDiscardAction ||
+                action instanceof DiscardAction ||
+                action instanceof DrawCardAction ||
+                action instanceof GainEnergyAction)
+            {
+                if (isRemotePlayerUsingCard)
+                {
+                    return SpireReturn.Return();
+                }
+            }
+
+            return SpireReturn.Continue();
+        }
+
+        @SpireInsertPatch()
         public static void Postfix(GameActionManager __instance, AbstractGameAction action)
         {
             if (skipActionSynchronization)
@@ -326,7 +350,7 @@ public class GameActionManagerPatch
                     }
                 }
 
-                if (action instanceof ApplyPowerAction)
+                else if (action instanceof ApplyPowerAction)
                 {
                     ApplyPowerAction applyPowerAction = (ApplyPowerAction)action;
                     
@@ -362,12 +386,12 @@ public class GameActionManagerPatch
                         }
                     }
                 }
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
             }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static abstract class ActionMessage

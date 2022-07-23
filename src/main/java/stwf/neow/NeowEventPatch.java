@@ -14,8 +14,20 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInsertPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
+import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.green.Flechettes;
+import com.megacrit.cardcrawl.cards.green.PiercingWail;
+import com.megacrit.cardcrawl.cards.green.Survivor;
+import com.megacrit.cardcrawl.cards.purple.Strike_Purple;
+import com.megacrit.cardcrawl.cards.red.FeelNoPain;
+import com.megacrit.cardcrawl.cards.red.Flex;
+import com.megacrit.cardcrawl.cards.red.Immolate;
+import com.megacrit.cardcrawl.cards.red.SeeingRed;
+import com.megacrit.cardcrawl.cards.red.ShrugItOff;
+import com.megacrit.cardcrawl.cards.red.Whirlwind;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.events.AbstractEvent;
+import com.megacrit.cardcrawl.helpers.CardLibrary;
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.neow.NeowReward;
 
@@ -100,6 +112,16 @@ public class NeowEventPatch
             {
                 AbstractPlayerPatch.initializeLocalPlayer();
                 MultiplayerManager.addLobbyCallback(CALLBACK, "event.neow.talked", "event.neow.mini-blessing", "event.neow.blessing");
+
+                AbstractCard card = CardLibrary.getCopy(ShrugItOff.ID);
+                AbstractDungeon.player.masterDeck.addToBottom(card.makeStatEquivalentCopy());
+                AbstractDungeon.player.masterDeck.addToBottom(card.makeStatEquivalentCopy());
+                AbstractDungeon.player.masterDeck.addToBottom(card.makeStatEquivalentCopy());
+
+                AbstractCard card2 = CardLibrary.getCopy(SeeingRed.ID);
+                AbstractDungeon.player.masterDeck.addToBottom(card2.makeStatEquivalentCopy());
+                AbstractDungeon.player.masterDeck.addToBottom(card2.makeStatEquivalentCopy());
+                AbstractDungeon.player.masterDeck.addToBottom(card2.makeStatEquivalentCopy());
             }
         }
     }
