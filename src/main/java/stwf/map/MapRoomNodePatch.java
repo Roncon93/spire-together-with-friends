@@ -29,10 +29,17 @@ public class MapRoomNodePatch
         public static void Insert(MapRoomNode __instance, float ___animWaitTimer)
         {
             if (AbstractDungeon.dungeonMapScreen.clicked)
-            {
-                messageSent = true;
-                RoomSelectedMessage message = new RoomSelectedMessage(__instance.x, __instance.y);
-                MultiplayerManager.sendPlayerData("map.room.selected", RoomSelectedMessage.toJson(message));
+            {                
+                if (MultiplayerManager.isLocalPlayerHost())
+                {
+                    messageSent = true;
+                    RoomSelectedMessage message = new RoomSelectedMessage(__instance.x, __instance.y);
+                    MultiplayerManager.sendPlayerData("map.room.selected", RoomSelectedMessage.toJson(message));
+                }
+                else
+                {
+                    AbstractDungeon.dungeonMapScreen.clicked = false;
+                }
             }
 
             if (shouldContinue)
