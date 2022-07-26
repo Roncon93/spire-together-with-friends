@@ -123,6 +123,21 @@ public class GameActionManagerPatch
                 MonsterGroupPatch.enableApplyEndOfTurnPowers = false;
             }
 
+            else if (key.equals("player.heal"))
+            {
+                Player player = MultiplayerManager.getPlayer(playerId);
+
+                Gdx.app.postRunnable(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        HealMessage message = JSON.fromJson(HealMessage.class, value);
+                        player.character.heal(message.amount, message.showEffect);
+                    }   
+                });
+            }
+
             else if (key.equals("player.increase-max-hp"))
             {
                 Player player = MultiplayerManager.getPlayer(playerId);
@@ -409,5 +424,11 @@ public class GameActionManagerPatch
         public Boolean isTargetPlayer;
         public Integer monsterId;
         public MultiplayerId playerId;
+    }
+
+    public static class HealMessage
+    {
+        public Integer amount;
+        public Boolean showEffect;
     }
 }
