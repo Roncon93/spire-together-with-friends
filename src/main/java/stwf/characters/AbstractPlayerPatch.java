@@ -30,6 +30,7 @@ public class AbstractPlayerPatch
     public static boolean enableMovePosition = false;
 
     private static boolean skipRenderBattleUiSynchronization = false;
+    private static boolean skipOnVictorySynchronization = false;
 
     private static final float[][] POSITIONS =
     {
@@ -98,7 +99,7 @@ public class AbstractPlayerPatch
     public static class RenderPlayerBattleUiPatch
     {
         @SpireInsertPatch
-        public static SpireReturn<Void> Prefix(AbstractPlayer __instance, SpriteBatch sb)
+        public static SpireReturn<Void> Prefix(SpriteBatch sb)
         {
             if (MultiplayerManager.inMultiplayerLobby() && !skipRenderBattleUiSynchronization)
             {
@@ -265,6 +266,34 @@ public class AbstractPlayerPatch
 
             enableMovePosition = false;            
             return SpireReturn.Return();
+        }
+    }
+
+    @SpirePatch2(clz = AbstractPlayer.class, method = "onVictory")
+    public static class OnVictoryPatch
+    {
+        @SpireInsertPatch
+        public static SpireReturn<Void> Prefix()
+        {
+            if (MultiplayerManager.inMultiplayerLobby() && !skipOnVictorySynchronization)
+            {
+                Iterator<Player> players = MultiplayerManager.getPlayers();
+                while (players.hasNext())
+                {
+                    Player player = players.next();
+                    
+                    skipOnVictorySynchronization = true;
+                    AbstractPlayer localPlayer = AbstractDungeon.player;
+                    AbstractDungeon.player = player.character;
+                    player.character.onVictory();
+                    AbstractDungeon.player = localPlayer;
+                    skipOnVictorySynchronization = false;
+                }
+
+                return SpireReturn.Return();
+            }
+
+            return SpireReturn.Continue();
         }
     }
 
