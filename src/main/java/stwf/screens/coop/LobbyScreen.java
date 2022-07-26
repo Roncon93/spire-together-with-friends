@@ -312,7 +312,7 @@ public class LobbyScreen implements BaseScreenInterface, CharacterSelectComponen
             {
                 for (Player player : lobby.players)
                 {
-                    player.character = CardCrawlGame.characterManager.recreateCharacter(player.character.chosenClass);
+                    player.character = player.character.newInstance();
                     AbstractPlayerFields.playerData.set(player.character, player);
                 }
             }
